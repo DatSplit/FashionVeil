@@ -1,0 +1,17 @@
+
+*.mp4
+.venv/
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.bmp
+*.tiff
+*.svg
+*.webp
+*.pt
+.venv
+*.pth
+*.avi
+lightning_logs/
+*.ckpt

@@ -16,7 +16,8 @@ categories = [
 ]
 
 # Items to check for
-items_to_check = ['sweater', 'cardigan','coat', 'cape', 'glasses', 'hat', 'watch', 'belt', 'scarf'] #jacket
+items_to_check = ['sweater', 'cardigan', 'coat', 'cape',
+                  'glasses', 'hat', 'watch', 'belt', 'scarf', 'jacket', 'zipper']
 
 # Load the model and feature extractor
 MODEL_NAME = "DatSplit/yolos-base-fashionpedia"
@@ -38,9 +39,11 @@ root.geometry("600x400")
 root.configure(bg="#003366")  # Dark blue background
 
 # GUI Elements
-detected_label = tk.Label(root, text="Detected Items:", font=("Helvetica", 16, "bold"), bg="#003366", fg="white")
+detected_label = tk.Label(root, text="Detected Items:", font=(
+    "Helvetica", 16, "bold"), bg="#003366", fg="white")
 detected_label.pack(pady=10)
-items_text = tk.Label(root, text="", font=("Helvetica", 16), bg="#003366", fg="green")
+items_text = tk.Label(root, text="", font=(
+    "Helvetica", 16), bg="#003366", fg="green")
 items_text.pack(pady=10)
 frame_label = tk.Label(root, bg="black")
 frame_label.pack(pady=20)
@@ -49,9 +52,11 @@ frame_label.pack(pady=20)
 detected_items_tracker = {}
 last_detection_time = 0
 
+
 def detect_items(frame):
     """Detect items using the model."""
-    inputs = feature_extractor(images=frame, return_tensors="pt").to('cuda' if torch.cuda.is_available() else 'cpu')
+    inputs = feature_extractor(images=frame, return_tensors="pt").to(
+        'cuda' if torch.cuda.is_available() else 'cpu')
     with torch.no_grad():
         outputs = model_fashion(**inputs)
     results = feature_extractor.post_process_object_detection(
@@ -64,6 +69,7 @@ def detect_items(frame):
     }
     return detected_items
 
+
 def update_gui(detected_items):
     """Update the GUI with detected items."""
     current_time = time.time()
@@ -73,8 +79,10 @@ def update_gui(detected_items):
         item for item, last_time in detected_items_tracker.items()
         if current_time - last_time <= 20
     ]
-    items_text.config(text=f"Please remove your {', '.join(items_to_display)}." if items_to_display else "No items detected.")
+    items_text.config(text=f"Please remove your {', '.join(
+        items_to_display)}." if items_to_display else "No items detected.")
     items_text.config(fg="red" if items_to_display else "green")
+
 
 def video_stream():
     """Capture frames and update the GUI."""
@@ -84,7 +92,7 @@ def video_stream():
         if not ret:
             break
         frame_resized = cv2.resize(frame, (640, 480))  # Reduce frame size
-        if time.time() - last_detection_time >= 0.5:  # Process every 0.5 seconds
+        if time.time() - last_detection_time >= 0.1:  # Process every 0.2 seconds
             detected_items = detect_items(frame_resized)
             update_gui(detected_items)
             last_detection_time = time.time()
@@ -93,6 +101,7 @@ def video_stream():
         frame_image = ImageTk.PhotoImage(pil_image)
         frame_label.config(image=frame_image)
         frame_label.image = frame_image
+
 
 # Run video stream in a separate thread
 threading.Thread(target=video_stream, daemon=True).start()

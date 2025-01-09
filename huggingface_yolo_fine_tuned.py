@@ -1,9 +1,9 @@
-import cv2 
+import cv2
 import torch
+import time
+import threading
 from transformers import YolosForObjectDetection, YolosFeatureExtractor
 import tkinter as tk
-from tkinter import font
-from tkinter import messagebox
 from PIL import Image, ImageTk
 
 # List of categories from the dataset
@@ -16,18 +16,17 @@ categories = [
 ]
 
 # Items to check for
-items_to_check = ['sweater', 'cardigan', 'jacket', 'coat', 'cape', 'glasses', 'hat', 'watch', 'belt', 'scarf']
+items_to_check = ['sweater', 'cardigan','coat', 'cape', 'glasses', 'hat', 'watch', 'belt', 'scarf'] #jacket
 
 # Load the model and feature extractor
 MODEL_NAME = "DatSplit/yolos-base-fashionpedia"
 feature_extractor = YolosFeatureExtractor.from_pretrained('hustvl/yolos-base')
 model_fashion = YolosForObjectDetection.from_pretrained(MODEL_NAME)
-from tkinter import PhotoImage
+if torch.cuda.is_available():
+    model_fashion = model_fashion.to('cuda')
 
 # Start video capture
 cap = cv2.VideoCapture(0)
-
-# Check if the webcam is opened correctly
 if not cap.isOpened():
     print("Error: Could not open video stream.")
     exit()
@@ -36,111 +35,66 @@ if not cap.isOpened():
 root = tk.Tk()
 root.title("Self-service divest (security lane)")
 root.geometry("600x400")
-root.configure(bg="#003366")  # Dark blue background like PointFwd
-# Open the image file and resize it
-img = Image.open("pwd_logo.png")
-img = img.resize((32, 32))
+root.configure(bg="#003366")  # Dark blue background
 
-# Convert the image for use in Tkinter
-img_tk = ImageTk.PhotoImage(img)
+# GUI Elements
+detected_label = tk.Label(root, text="Detected Items:", font=("Helvetica", 16, "bold"), bg="#003366", fg="white")
+detected_label.pack(pady=10)
+items_text = tk.Label(root, text="", font=("Helvetica", 16), bg="#003366", fg="green")
+items_text.pack(pady=10)
+frame_label = tk.Label(root, bg="black")
+frame_label.pack(pady=20)
 
-# Set the window icon
-root.iconphoto(True, img_tk)
-
-# Create a frame for the title bar
-title_frame = tk.Frame(root, bg="#003366", height=50)
-title_frame.pack(fill="x", side="top")
-
-
-
-
-# Main content frame (below the title bar)
-main_frame = tk.Frame(root, bg="#003366")
-main_frame.pack(fill="both", expand=True, padx=20, pady=20)
-
-# Label to display detected items
-detected_label = tk.Label(main_frame, text="Detected Items:", font=("Helvetica", 16, "bold"), bg="#003366", fg="white")
-detected_label.pack(padx=20, pady=20)
-
-# Create a dynamic label to update detected items
-items_text = tk.Label(main_frame, text="", font=("Helvetica", 16), bg="#003366", fg="green", anchor="w", justify="left")
-items_text.pack(padx=20)
-
-# Create a frame for showing the webcam feed (as an image)
-frame_label = tk.Label(main_frame, bg="black")
-frame_label.pack(padx=20, pady=20)
-
-# Update the update_gui function
-def update_gui(detected_items):
-    """Update the GUI with the detected items."""
-    items_str = ', '.join(detected_items)
-    items_text.config(text=f"Please remove your {items_str}." if detected_items else "No items detected.")
-    
-    # Animate text color change for better user engagement
-    items_text.config(fg="red" if detected_items else "green")
-
-    # Update the webcam frame in the tkinter window
-    ret, frame = cap.read()
-    if ret:
-        # Convert the frame from BGR (OpenCV format) to RGB
-        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        
-        # Convert the frame to a PIL Image
-        pil_image = Image.fromarray(frame_rgb)
-
-        # Convert the PIL Image to a format that tkinter can handle
-        frame_image = ImageTk.PhotoImage(pil_image)
-
-        # Update the label with the new image
-        frame_label.config(image=frame_image)
-        frame_label.image = frame_image  # Keep a reference to the image object
+# Detection tracker
+detected_items_tracker = {}
+last_detection_time = 0
 
 def detect_items(frame):
     """Detect items using the model."""
-    inputs = feature_extractor(images=frame, return_tensors="pt")
-
-    # Perform inference
+    inputs = feature_extractor(images=frame, return_tensors="pt").to('cuda' if torch.cuda.is_available() else 'cpu')
     with torch.no_grad():
         outputs = model_fashion(**inputs)
-
-    # Get predictions (bounding boxes, labels, and scores)
-    target_sizes = torch.tensor([frame.shape[0:2]])  # Height, Width
-    results = feature_extractor.post_process_object_detection(outputs, target_sizes=target_sizes)[0]
-
-    # Check if the user is wearing any of the specified items
-    detected_items = set()
-    for box, label, score in zip(results['boxes'], results['labels'], results['scores']):
-        if score > 0.4:  # Only display detections with high confidence
-            label = label.item()
-            category_name = categories[label] if label < len(categories) else 'Unknown'
-            
-            # Add the detected item to the set if it matches any from the items_to_check
-            if category_name.lower() in items_to_check:
-                detected_items.add(category_name.lower())
+    results = feature_extractor.post_process_object_detection(
+        outputs, target_sizes=torch.tensor([frame.shape[:2]])
+    )[0]
+    detected_items = {
+        categories[label.item()].lower()
+        for label, score in zip(results['labels'], results['scores'])
+        if score > 0.4 and categories[label.item()].lower() in items_to_check
+    }
     return detected_items
 
-while True:
-    # Read frame from the video capture
-    ret, frame = cap.read()
-    
-    if not ret:
-        print("Error: Could not read frame.")
-        break
+def update_gui(detected_items):
+    """Update the GUI with detected items."""
+    current_time = time.time()
+    for item in detected_items:
+        detected_items_tracker[item] = current_time
+    items_to_display = [
+        item for item, last_time in detected_items_tracker.items()
+        if current_time - last_time <= 20
+    ]
+    items_text.config(text=f"Please remove your {', '.join(items_to_display)}." if items_to_display else "No items detected.")
+    items_text.config(fg="red" if items_to_display else "green")
 
-    # Detect items in the frame
-    detected_items = detect_items(frame)
+def video_stream():
+    """Capture frames and update the GUI."""
+    global last_detection_time
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+        frame_resized = cv2.resize(frame, (640, 480))  # Reduce frame size
+        if time.time() - last_detection_time >= 0.5:  # Process every 0.5 seconds
+            detected_items = detect_items(frame_resized)
+            update_gui(detected_items)
+            last_detection_time = time.time()
+        frame_rgb = cv2.cvtColor(frame_resized, cv2.COLOR_BGR2RGB)
+        pil_image = Image.fromarray(frame_rgb)
+        frame_image = ImageTk.PhotoImage(pil_image)
+        frame_label.config(image=frame_image)
+        frame_label.image = frame_image
 
-    # Update the GUI with detected items
-    update_gui(detected_items)
-
-    # Update the tkinter window
-    root.update()
-
-    # Exit if 'q' is pressed on the keyboard
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-
-# Release the video capture and close OpenCV windows
+# Run video stream in a separate thread
+threading.Thread(target=video_stream, daemon=True).start()
+root.mainloop()
 cap.release()
-root.quit()
-root.destroy()

@@ -96,12 +96,14 @@ def rescale_bboxes(out_bbox, size):
     return b
 
 
-def box_cxcywh_to_xyxy(x: torch.Tensor) -> torch.Tensor:
+def box_cxcywh_to_xyxy(x) -> torch.Tensor:
     """
     Convert bounding boxes from center format to corner format.
-    :param x: Tensor-like bounding box with format (center of x, center of y, width, height)
+    :param x: Tensor-like or list-like bounding box with format (center of x, center of y, width, height)
     :return: Tensor-like bounding box with format (x1, y1, x2, y2)
     """
+    if isinstance(x, list):
+        x = torch.tensor(x)
     x_c, y_c, w, h = x.unbind(1)
     b = [(x_c - 0.5 * w), (y_c - 0.5 * h),
          (x_c + 0.5 * w), (y_c + 0.5 * h)]

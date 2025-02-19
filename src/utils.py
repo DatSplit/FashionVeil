@@ -89,10 +89,15 @@ def cxcywh_to_xyxy(x: torch.Tensor) -> torch.Tensor:
     return torch.stack(b, dim=1)
 
 
-def rescale_bboxes(out_bbox, size):
+def rescale_bboxes(out_bbox, size, down=True):
+    """
+    Boxes information contains values between 0 and 1 instead of values in pixels. This is made in order to make the boxes independant from the size of the image. But we may need to re-escale the box.
+    """
     img_w, img_h = size
-    b = box_cxcywh_to_xyxy(out_bbox)
-    b = b * torch.tensor([img_w, img_h, img_w, img_h], dtype=torch.float32)
+    if down:
+        b = torch.Tensor(out_bbox) / torch.tensor([img_w, img_h, img_w, img_h], dtype=torch.float32)
+    if not down:
+        b = torch.Tensor(out_bbox) * torch.tensor([img_w, img_h, img_w, img_h], dtype=torch.float32)
     return b
 
 

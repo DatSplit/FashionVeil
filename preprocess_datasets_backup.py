@@ -5,13 +5,11 @@ from transformers import AutoFeatureExtractor
 import torch
 from torchvision.transforms import ToTensor
 from torch.utils.data import DataLoader, Dataset
-import lightning as pl
-import datasets
 
 from utils import fix_channels, rescale_bboxes, xyxy_to_xcycwh
 
 
-class FashionpediaDataPreprocessor(pl.LightningDataModule):
+class DataPreprocessor:
     def __init__(self, feature_extractor: AutoFeatureExtractor, batch_size: int = 1, num_workers: int = 27):
         """
         Initializes the DataPreprocessor with the given feature extractor, batch size, and number of workers.
@@ -21,14 +19,12 @@ class FashionpediaDataPreprocessor(pl.LightningDataModule):
             batch_size (int, optional): The batch size for the dataloaders. Defaults to 1.
             num_workers (int, optional): The number of workers for the dataloaders. Defaults to 27.
         """
-        self.feature_extractor: AutoFeatureExtractor = feature_extractor
-        self.batch_size: int = batch_size
-        self.num_workers: int = num_workers
-        self.cats = datasets.load_dataset(
-            "detection-datasets/fashionpedia", split="val").features['objects'].feature['category']
-        self._log_hyperparams = True
-        self.allow_zero_length_dataloader_with_multiple_devices = True
-        self.prepare_data_per_node = False
+        self.feature_extractor = feature_extractor
+        self.batch_size = batch_size
+        self.num_workers = num_workers
+        self.train_dataloader: Optional[DataLoader] = None
+        self.val_dataloader: Optional[DataLoader] = None
+        self.test_dataloader: Optional[DataLoader] = None
 
     def transform(self, batch: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -40,7 +36,6 @@ class FashionpediaDataPreprocessor(pl.LightningDataModule):
         Returns:
             Dict[str, Any]: A dictionary with transformed image and labels.
         """
-
         inputs = {}
         image = batch['image']
         image = fix_channels(ToTensor()(image[0]))
@@ -48,7 +43,7 @@ class FashionpediaDataPreprocessor(pl.LightningDataModule):
             [image], return_tensors='pt')['pixel_values']
         labels = []
         bbox = [rescale_bboxes(batch['objects'][i]['bbox'], (batch['width']
-                                                             [i], batch['height'][i])) for i in range(len(batch['objects']))]
+                               [i], batch['height'][i])) for i in range(len(batch['objects']))]
         bbox = [xyxy_to_xcycwh(torch.Tensor(bbox_i)) for bbox_i in bbox]
         labels.append({
             "boxes": bbox,
@@ -86,27 +81,20 @@ class FashionpediaDataPreprocessor(pl.LightningDataModule):
             collated["labels"].append(item['labels'])
         return collated
 
-    def prepare_data(self):
-        # Download or prepare your dataset here
-        pass
+    def prepare_dataloaders(self, train_dataset: Dataset, val_dataset: Dataset, test_dataset: Dataset) -> None:
+        """
+        Prepares the dataloaders for training and validation datasets.
 
-    def setup(self, stage):
-        print("Loading Fashionpedia dataset...")
-        self.train_ds = datasets.load_dataset("detection-datasets/fashionpedia", split=datasets.ReadInstruction(
-            "train", from_=0, to=95, unit="%", rounding="pct1_dropremainder")).with_transform(self.transform)
-        self.val_ds = datasets.load_dataset("detection-datasets/fashionpedia", split=datasets.ReadInstruction(
-            "train", from_=95, to=100, unit="%", rounding="pct1_dropremainder")).with_transform(self.transform)
-        self.test_ds = datasets.load_dataset(
-            "detection-datasets/fashionpedia", split=datasets.ReadInstruction("val")).with_transform(self.transform)
-
-    def train_dataloader(self):
-        return DataLoader(
-            self.train_ds, collate_fn=self.collate_fn, batch_size=self.batch_size, num_workers=self.num_workers)
-
-    def val_dataloader(self):
-        return DataLoader(
-            self.val_ds, collate_fn=self.collate_fn, batch_size=self.batch_size, num_workers=self.num_workers)
-
-    def test_dataloader(self):
-        return DataLoader(
-            self.test_ds, collate_fn=self.collate_fn, batch_size=self.batch_size, num_workers=self.num_workers)
+        Args:
+            train_dataset (Dataset): The training dataset.
+            val_dataset (Dataset): The validation dataset.
+        """
+        prepared_train = train_dataset.with_transform(self.transform)
+        prepared_val = val_dataset.with_transform(self.transform)
+        prepared_test = test_dataset.with_transform(self.transform)
+        self.train_dataloader = DataLoader(
+            prepared_train, collate_fn=self.collate_fn, batch_size=self.batch_size, num_workers=self.num_workers)
+        self.val_dataloader = DataLoader(
+            prepared_val, collate_fn=self.collate_fn, batch_size=self.batch_size, num_workers=self.num_workers)
+        self.test_dataloader = DataLoader(
+            prepared_test, collate_fn=self.collate_fn, batch_size=self.batch_size, num_workers=self.num_workers)

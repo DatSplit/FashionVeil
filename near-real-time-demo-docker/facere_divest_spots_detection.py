@@ -95,8 +95,9 @@ transforms = weights.transforms()
 label_id_to_name, label_id_to_color = process_categories()
 # Create an inference session.
 ort_session = onnxruntime.InferenceSession(
-    path_onnx, providers=["CUDAExecutionProvider"] #, "CPUExecutionProvider"
+    path_onnx, providers=["TensorrtExecutionProvider", "CUDAExecutionProvider"] 
 )
+#, "CPUExecutionProvider"
 fps = 0
 import os
 def draw_predictions(labels, scores, img, boxes):

@@ -11,3 +11,4 @@ torch
 torchmetrics
 torchvision
 transformers
+onnxruntime

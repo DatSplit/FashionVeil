@@ -1,5 +1,5 @@
 # pylint: disable=missing-module-docstring
-from typing import List, Tuple
+from typing import List
 
 import torch
 from torchvision.transforms import ToPILImage
@@ -91,13 +91,15 @@ def cxcywh_to_xyxy(x: torch.Tensor) -> torch.Tensor:
 
 def rescale_bboxes(out_bbox, size, down=True):
     """
-    Boxes information contains values between 0 and 1 instead of values in pixels. This is made in order to make the boxes independant from the size of the image. But we may need to re-escale the box.
+    Boxes information contains values between 0 and 1 instead of values in pixels. This is made in order to make the boxes independent from the size of the image. But we may need to re-escale the box.
     """
     img_w, img_h = size
     if down:
-        b = torch.Tensor(out_bbox) / torch.tensor([img_w, img_h, img_w, img_h], dtype=torch.float32)
+        b = torch.Tensor(
+            out_bbox) / torch.tensor([img_w, img_h, img_w, img_h], dtype=torch.float32)
     if not down:
-        b = torch.Tensor(out_bbox) * torch.tensor([img_w, img_h, img_w, img_h], dtype=torch.float32)
+        b = torch.Tensor(
+            out_bbox) * torch.tensor([img_w, img_h, img_w, img_h], dtype=torch.float32)
     return b
 
 

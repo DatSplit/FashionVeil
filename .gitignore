@@ -1,4 +1,3 @@
-
 *.mp4
 .venv/
 *.jpg
@@ -17,5 +16,5 @@ lightning_logs/
 *.ckpt
 *.pyc
 .aim/
-near-real-time-demo-docker/cuda_12.8.0_570.86.10_linux.run
 *.onnx
+FashionVeil.egg-info/

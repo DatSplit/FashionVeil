@@ -1,23 +1,20 @@
-import lightning as pl
-import torch
+import torch  # noqa
 from lightning import Trainer
-from transformers import AutoFeatureExtractor, YolosForObjectDetection
-from preprocess_datasets import FashionpediaDataPreprocessor
-from torchmetrics.detection.mean_ap import MeanAveragePrecision
-import matplotlib.pyplot as plt
-import logging
-from model import Yolosbase
+from lightning.pytorch.callbacks import ModelCheckpoint
+from transformers import AutoFeatureExtractor
+from aim.pytorch_lightning import AimLogger
+
+from src.yolos import Yolosbase
 from preprocess_datasets import FashionpediaDataPreprocessor
 import config
 from callbacks import PrintingCallback
-from lightning.pytorch.callbacks import EarlyStopping, ModelCheckpoint
-from aim.pytorch_lightning import AimLogger
+
 
 if __name__ == "__main__":
     feature_extractor = AutoFeatureExtractor.from_pretrained(
         "hustvl/yolos-base", size=816, longest_edge=864)
     dm = FashionpediaDataPreprocessor(feature_extractor)
-    model = Yolosbase(lr=config.LEARNING_RATE,
+    model = Yolosbase(learning_rate=config.LEARNING_RATE,
                       weight_decay=config.WEIGHT_DECAY, _cats=dm.cats.num_classes)
     aim_logger = AimLogger(
         experiment="test",

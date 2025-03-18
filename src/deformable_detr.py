@@ -1,31 +1,31 @@
-import lightning as pl
-import torch
-from lightning import Trainer
-from transformers import AutoFeatureExtractor, YolosForObjectDetection
-from preprocess_datasets import FashionpediaDataPreprocessor
-from torchmetrics.detection.mean_ap import MeanAveragePrecision
-import matplotlib.pyplot as plt
+# Standard library imports
 import logging
-from pytorch_lightning.callbacks import EarlyStopping
+
+# Third-party imports
+import lightning as pl
+import matplotlib.pyplot as plt
+import torch
+from torchmetrics.detection.mean_ap import MeanAveragePrecision
+from transformers import DeformableDetrForObjectDetection
+from loguru import logger
 
 
-logging.basicConfig(level=logging.INFO)
-
-
-class Yolosbase(pl.LightningModule):
+class DeformableDetrFashionpedia(pl.LightningModule):
 
     def __init__(self, learning_rate, weight_decay, _cats):
         super().__init__()
         self.save_hyperparameters()
+        self.map_metric = MeanAveragePrecision(
+            class_metrics=True, box_format="cxcywh")
         self.learning_rate = learning_rate
         self.weight_decay = weight_decay
         self._cats = _cats
-        # self.model = AutoModelForObjectDetection.from_pretrained("hustvl/yolos-base",
-        # num_labels=self._cats, ignore_mismatched_sizes=True)
-        self.model = YolosForObjectDetection.from_pretrained(
-            "DatSplit/yolos-base-fashionpedia", num_labels=self._cats, ignore_mismatched_sizes=True)
-        self.map_metric = MeanAveragePrecision(
-            class_metrics=True, box_format="cxcywh")
+        self.optimizer_name = "adam"
+        self.beta1 = 0.9
+        self.beta2 = 0.999
+        self.momentum = 0.9
+        self.model = DeformableDetrForObjectDetection.from_pretrained(
+            "SenseTime/deformable-detr", num_labels=self._cats, ignore_mismatched_sizes=True)
 
     def convert_batch_to_target(self, batch):
         targets = []
@@ -57,7 +57,6 @@ class Yolosbase(pl.LightningModule):
         pixel_values = batch["pixel_values"]
         labels = [{k: v.to(self.device) for k, v in t.items()}
                   for t in batch["labels"]]
-
         outputs = self.model(pixel_values=pixel_values, labels=labels)
 
         loss = outputs.loss

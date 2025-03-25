@@ -14,7 +14,7 @@ if __name__ == "__main__":
     feature_extractor = DeformableDetrImageProcessor()
     dm = FashionpediaDataPreprocessor(feature_extractor)
     model = DeformableDetrFashionpedia(learning_rate=config.LEARNING_RATE,
-                                       weight_decay=config.WEIGHT_DECAY, _cats=dm.cats.num_classes)
+                                       weight_decay=config.WEIGHT_DECAY, optimizer_name=config.OPTIMIZER, _cats=dm.cats.num_classes)
     aim_logger = AimLogger(
         experiment=config.EXPERIMENT_NAME,
         train_metric_prefix="train_",
@@ -25,12 +25,15 @@ if __name__ == "__main__":
         save_top_k=1,
         monitor="validation_loss",
         filename=config.EXPERIMENT_NAME + "-{epoch:02d}-{validation_loss:.2f}",
+        save_last=True,
     )
 
     trainer = Trainer(max_epochs=config.NUM_EPOCHS, accelerator="gpu",
                       # accumulate_grad_batches=2
-                      devices=1, logger=aim_logger, callbacks=[PrintingCallback(), cb_ckpt], precision="16-mixed")
+                      # Add gradient clipping to prevent NaN values
+                      devices=1, logger=aim_logger, callbacks=[PrintingCallback(), cb_ckpt], accumulate_grad_batches=16,  precision="16-mixed",      gradient_clip_val=0.5,
+                      gradient_clip_algorithm="norm")
     torch.set_float32_matmul_precision('medium')
     trainer.fit(model, dm)
-    # trainer.validate(model, dm)
-    # trainer.test(model, dm)
+    trainer.validate(model, dm)
+    trainer.test(model, dm)

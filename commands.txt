@@ -1,0 +1,2 @@
+python export_to_onnx.py --checkpoint ../saved_models/rtdetr_v2_r101_fashionpedia-20250325_173024-epoch=00-validation_loss=8.73.ckpt --output epoch_rtdetr_v2_r101.onnx --pretrained_model PekingU/rtdetr_v2_r101vd --num_classes 46
+

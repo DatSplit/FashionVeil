@@ -5,6 +5,7 @@ import torch
 from torchvision.transforms import ToPILImage
 from PIL import Image
 import matplotlib.pyplot as plt
+from loguru import logger
 
 CATS = ['shirt, blouse', 'top, t-shirt, sweatshirt', 'sweater', 'cardigan', 'jacket',
         'vest', 'pants', 'shorts', 'skirt', 'coat', 'dress', 'jumpsuit',
@@ -103,6 +104,31 @@ def rescale_bboxes(out_bbox, size, down=True):
     return b
 
 
+def rescale_bboxes_detr(out_bbox, size):
+    """
+    Rescale normalized bounding boxes (0-1) to image pixel coordinates.
+
+    :param out_bbox: Normalized bounding boxes with format (x1, y1, x2, y2) or (cx, cy, w, h)
+    :param size: Image size (width, height)
+    :return: Bounding boxes in pixel coordinates
+    """
+    img_w, img_h = size
+
+    # For DeformableDetr, boxes are typically in (cx, cy, w, h) format and normalized
+    # We need to convert them to (x1, y1, x2, y2) and scale to image size
+
+    # Check if the box format is center-based (common in Detr models)
+    if out_bbox.size(1) == 4:
+        # Convert from center format (cx, cy, w, h) to corner format (x1, y1, x2, y2)
+        out_bbox = box_cxcywh_to_xyxy(out_bbox)
+
+    # Scale from [0, 1] to image dimensions
+    b = out_bbox * \
+        torch.tensor([img_w, img_h, img_w, img_h], dtype=torch.float32)
+
+    return b
+
+
 def box_cxcywh_to_xyxy(x) -> torch.Tensor:
     """
     Convert bounding boxes from center format to corner format.
@@ -147,6 +173,8 @@ def visualize_predictions(image: Image.Image, outputs: torch.Tensor, threshold: 
     """
     probas = outputs.logits.softmax(-1)[0, :, :-1]
     keep = probas.max(-1).values > threshold
-    bboxes_scaled = rescale_bboxes(
+    logger.debug(
+        f"Predicted probabilities above threshold: {probas.max(-1).values[probas.max(-1).values > threshold]}")
+    bboxes_scaled = rescale_bboxes_detr(
         outputs.pred_boxes[0, keep].cpu(), image.size)
     plot_results(image, probas[keep], bboxes_scaled)

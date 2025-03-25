@@ -1,42 +1,38 @@
-# Standard library imports
 from typing import Union, Tuple
-# Third-party imports
+
+from transformers.models.rt_detr.modeling_rt_detr import RTDetrObjectDetectionOutput
+from transformers import RTDetrForObjectDetection, RTDetrV2ForObjectDetection, RTDetrConfig
 import lightning as pl
 import torch
-from transformers import DeformableDetrForObjectDetection
-from transformers.models.deformable_detr.modeling_deformable_detr import DeformableDetrObjectDetectionOutput
-from loguru import logger
 
 
-class DeformableDetrFashionpedia(pl.LightningModule):
-    """ Deformable DETR model for Fashionpedia dataset. """
+def initialize_model(backbone, cats):
+    if backbone == "default":
+        model = RTDetrForObjectDetection.from_pretrained(
+            "PekingU/rtdetr_r50vd", num_labels=cats, ignore_mismatched_sizes=True)
+    if backbone == "rtdetr_v2_r101vd":
+        model = RTDetrV2ForObjectDetection.from_pretrained(
+            "PekingU/rtdetr_v2_r101vd", num_labels=cats, ignore_mismatched_sizes=True)
+        return model
 
-    def __init__(self, learning_rate, weight_decay, _cats, optimizer_name, freeze_backbone=True, momentum=None, beta1=None, beta2=None):
+
+class rtdetr(pl.LightningModule):
+    """ RT-DETR model for the Fashionpedia dataset"""
+
+    def __init__(self, learning_rate: float, weight_decay: float, _cats: int, optimizer_name: str, backbone: str, momentum=None, beta1=None, beta2=None):
         super().__init__()
         self.save_hyperparameters()
         self.learning_rate = learning_rate
         self.weight_decay = weight_decay
-        self._cats = _cats
         self.optimizer_name = optimizer_name
+        self.momentum = momentum
         self.beta1 = beta1
         self.beta2 = beta2
-        self.momentum = momentum
-        self.model = DeformableDetrForObjectDetection.from_pretrained(
-            "SenseTime/deformable-detr-with-box-refine-two-stage", num_labels=self._cats, ignore_mismatched_sizes=True)
+        self._cats = _cats
+        self.model = initialize_model(backbone, _cats)
 
-        if freeze_backbone:
-            self._freeze_backbone()
-
-    def _freeze_backbone(self):
-        """
-        Freeze the backbone of the DeformableDetr model.
-        """
-        for param in self.model.model.backbone.parameters():
-            param.requires_grad = False
-        logger.info("Backbone frozen!")
-
-    def forward(self, pixel_values: torch.Tensor) -> Union[DeformableDetrObjectDetectionOutput, Tuple[torch.FloatTensor, ...]]:
-        """Forward pass of the Deformable DETR model.
+    def forward(self, pixel_values: torch.Tensor) -> Union[RTDetrObjectDetectionOutput, Tuple[torch.FloatTensor, ...]]:
+        """Forward pass of the RT-DETR model.
 
         This method passes the input images through the model and returns detection outputs.
         When called during inference (without labels), this returns bounding boxes, class scores,
@@ -47,8 +43,8 @@ class DeformableDetrFashionpedia(pl.LightningModule):
                 with shape (batch_size, num_channels, height, width).
 
         Returns:
-            Union[DeformableDetrObjectDetectionOutput, Tuple[torch.FloatTensor, ...]]: 
-                Either a DeformableDetrObjectDetectionOutput object containing loss, scores, 
+            Union[RTDetrObjectDetectionOutput, Tuple[torch.FloatTensor, ...]]:
+                Either an RTDetrObjectDetectionOutput object containing loss, scores,
                 and bounding boxes (when used with labels) or a tuple of tensors containing
                 prediction scores and boxes (during inference).
         """
@@ -60,8 +56,8 @@ class DeformableDetrFashionpedia(pl.LightningModule):
         pixel_values = batch["pixel_values"]
         labels = [{k: v.to(self.device) for k, v in t.items()}
                   for t in batch["labels"]]
-
-        outputs = self.model(pixel_values=pixel_values, labels=labels)
+        outputs = self.model(pixel_values=pixel_values,
+                             labels=labels)
 
         loss = outputs.loss
         loss_dict = outputs.loss_dict
@@ -69,7 +65,7 @@ class DeformableDetrFashionpedia(pl.LightningModule):
         return loss, loss_dict
 
     def training_step(self, batch: dict) -> torch.Tensor:
-        " Training step for the Deformable DETR model. "
+        " Training step for the RT-DETR model. "
         loss, loss_dict = self.common_step(batch)
         self.log("training_loss", loss, batch_size=1)
         for k, v in loss_dict.items():
@@ -78,7 +74,7 @@ class DeformableDetrFashionpedia(pl.LightningModule):
         return loss
 
     def validation_step(self, batch: dict) -> torch.Tensor:
-        " Validation step for the Deformable DETR model. "
+        " Validation step for the RT-DETR model. "
         loss, loss_dict = self.common_step(batch)
         self.log("validation_loss", loss, batch_size=1)
         for k, v in loss_dict.items():
@@ -86,8 +82,8 @@ class DeformableDetrFashionpedia(pl.LightningModule):
 
         return loss
 
-    def test_step(self, batch: dict) -> Tuple[torch.Tensor, dict, DeformableDetrObjectDetectionOutput]:
-        " Test step for the Deformable DETR model. "
+    def test_step(self, batch: dict) -> Tuple[torch.Tensor, dict, RTDetrObjectDetectionOutput]:
+        " Test step for the  RT-DETR model. "
         loss, loss_dict = self.common_step(batch)
         self.log("validation_loss", loss, batch_size=1)
         for k, v in loss_dict.items():

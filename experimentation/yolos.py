@@ -7,20 +7,23 @@ import matplotlib.pyplot as plt
 import torch
 from torchmetrics.detection.mean_ap import MeanAveragePrecision
 from transformers import YolosForObjectDetection
+import config
 
 
 class Yolosbase(pl.LightningModule):
 
-    def __init__(self, learning_rate, weight_decay, _cats):
+    def __init__(self, learning_rate, weight_decay, _cats, optimizer_name="adam", momentum=None, beta1=None, beta2=None):
         super().__init__()
         self.save_hyperparameters()
         self.learning_rate = learning_rate
         self.weight_decay = weight_decay
+        self.optimizer_name = optimizer_name
+        self.momentum = momentum
+        self.beta1 = beta1
+        self.beta2 = beta2
         self._cats = _cats
         self.model = YolosForObjectDetection.from_pretrained(
-            "DatSplit/yolos-base-fashionpedia", num_labels=self._cats, ignore_mismatched_sizes=True)
-        self.map_metric = MeanAveragePrecision(
-            class_metrics=True, box_format="cxcywh")
+            "hustvl/yolos-base", num_labels=self._cats, ignore_mismatched_sizes=True, attn_implementation="sdpa")
 
     def convert_batch_to_target(self, batch):
         targets = []
@@ -58,58 +61,31 @@ class Yolosbase(pl.LightningModule):
         loss = outputs.loss
         loss_dict = outputs.loss_dict
 
-        preds = [
-            {
-                "scores": torch.max(logit, dim=1)[0],
-                "boxes": pred_box,
-                "labels": torch.argmax(logit, dim=1)
-            }
-            for logit, pred_box in zip(outputs.logits, outputs.pred_boxes)
-        ]
-
-        targets = self.convert_batch_to_target(batch)
-        self.map_metric.update(preds, targets)
-
         return loss, loss_dict, outputs
 
     def training_step(self, batch, batch_idx):
         loss, loss_dict = self.common_step(batch, batch_idx)
-        self.log("training_loss", loss)
+        self.log("training_loss", loss, batch_size=config.BATCH_SIZE)
         for k, v in loss_dict.items():
-            self.log("train_" + k, v.item())
+            self.log("train_" + k, v.item(), batch_size=config.BATCH_SIZE)
 
         return loss
 
     def validation_step(self, batch, batch_idx):
         loss, loss_dict, outputs = self.common_step_val_test(batch, batch_idx)
-        self.log("validation_loss", loss)
+        self.log("validation_loss", loss, batch_size=config.BATCH_SIZE)
         for k, v in loss_dict.items():
-            self.log("validation_" + k, v.item())
+            self.log("validation_" + k, v.item(), batch_size=config.BATCH_SIZE)
 
         return loss
 
-    def on_validation_epoch_end(self):
-        map_score = self.map_metric.compute()
-        logging.info(f"map_score: {map_score}")
-        fig_, ax_ = self.map_metric.plot()
-        plt.show()
-        self.map_metric.reset()
-
     def test_step(self, batch, batch_idx):
         loss, loss_dict, outputs = self.common_step_val_test(batch, batch_idx)
-        self.log("validation_loss", loss)
+        self.log("validation_loss", loss, batch_size=config.BATCH_SIZE)
         for k, v in loss_dict.items():
-            self.log("validation_" + k, v.item())
+            self.log("validation_" + k, v.item(), batch_size=config.BATCH_SIZE)
 
         return loss, loss_dict, outputs
-
-    def on_test_epoch_end(self):
-        map_score = self.map_metric.compute()
-        fig_, ax_ = self.map_metric.plot()
-        plt.show()
-        logging.info(f"map_score: {map_score}")
-
-        self.map_metric.reset()
 
     # From: https://github.com/rizavelioglu/fashionfail/blob/main/src/fashionfail/models/facere.py#L33
     def optimizer_parameters(self):

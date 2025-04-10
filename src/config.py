@@ -1,6 +1,6 @@
 # Training hyperparameters
 LEARNING_RATE = 2.5e-5
-BATCH_SIZE = 16
+BATCH_SIZE = 32
 NUM_EPOCHS = 50
 WEIGHT_DECAY = 1e-4
 OPTIMIZER = "adam"
@@ -16,7 +16,8 @@ PRECISION = 16
 
 # Checkpointing
 # "./saved_models/rtdetr-20250320_003348-epoch=17-validation_loss=6.43.ckpt"
-CKPT_PATH = "./saved_models/rtdetr_v2_r101_fashionpedia-20250325_173024-epoch=03-validation_loss=7.48.ckpt"
+# "./saved_models/rtdetr_v2_r101_fashionpedia-20250325_173024-epoch=03-validation_loss=7.48.ckpt"
+CKPT_PATH = "./saved_models/rtdetr_v2_r101_fashionpedia-20250326_180951-epoch=03-validation_loss=7.67.ckpt"
 
 # Backbone
 BACKBONE = "rtdetr_v2_r101vd"

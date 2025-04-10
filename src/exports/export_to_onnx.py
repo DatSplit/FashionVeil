@@ -11,13 +11,13 @@ def parse_args():
     parser.add_argument(
         '--checkpoint',
         type=str,
-        default="../saved_models/rtdetr-20250320_003348-epoch=14-validation_loss=6.58.ckpt",
+        default="../saved_models/rtdetr_v2_r101_fashionpedia-20250327_100244-epoch=06-validation_loss=7.22.ckpt",
         help='Path to the checkpoint file'
     )
     parser.add_argument(
         '--output',
         type=str,
-        default="rtdetr_v2_r101_fashionpedia.onnx",
+        default="rtdetr_v2_r101_fashionpedia_b32_split75_25.onnx",
         help='Output filename for the ONNX model'
     )
     parser.add_argument(

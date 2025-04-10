@@ -98,9 +98,9 @@ class FashionpediaDataPreprocessor(pl.LightningDataModule):
     def setup(self, stage):
         print("Loading Fashionpedia dataset...")
         self.train_ds = datasets.load_dataset("detection-datasets/fashionpedia", split=datasets.ReadInstruction(
-            "train", from_=0, to=95, unit="%", rounding="pct1_dropremainder")).with_transform(self.transform)
+            "train", from_=0, to=75, unit="%", rounding="pct1_dropremainder")).with_transform(self.transform)
         self.val_ds = datasets.load_dataset("detection-datasets/fashionpedia", split=datasets.ReadInstruction(
-            "train", from_=95, to=100, unit="%", rounding="pct1_dropremainder")).with_transform(self.transform)
+            "train", from_=75, to=100, unit="%", rounding="pct1_dropremainder")).with_transform(self.transform)
         self.test_ds = datasets.load_dataset(
             "detection-datasets/fashionpedia", split=datasets.ReadInstruction("val")).with_transform(self.transform)
 

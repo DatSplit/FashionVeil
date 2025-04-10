@@ -16,6 +16,7 @@ from callbacks import PrintingCallback
 
 if __name__ == "__main__":
     # Initialize the feature extractor, data preprocessor, model, logger, and callbacks
+    logger.info(f"Checkpoint path: {config.CKPT_PATH}")
     seed_everything(config.SEED, workers=True)
     feature_extractor = RTDetrImageProcessor.from_pretrained(
         f"PekingU/{config.BACKBONE}")

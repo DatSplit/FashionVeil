@@ -18,3 +18,7 @@ lightning_logs/
 .aim/
 *.onnx
 FashionVeil.egg-info/
+*.json
+*.jpg
+*.Identifier
+events.out.tfevents.*

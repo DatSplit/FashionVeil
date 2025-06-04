@@ -18,3 +18,10 @@ lightning_logs/
 .aim/
 *.onnx
 FashionVeil.egg-info/
+*.json
+*.pdf
+*.Identifier
+*:Zone.Identifier
+*.0
+*.csv
+*.xlsx

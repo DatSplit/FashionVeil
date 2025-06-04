@@ -4,6 +4,7 @@ from rfdetr import RFDETRLarge
 import os
 model = RFDETRLarge(resolution=1120)
 dataset_dir = os.path.expanduser("~/.cache/rfdetr_fashionpedia/")
+fine_tune_dataset_dir = "/home/datsplit/wearables_detection_airport_security/FashionVeil/"
 history = []
 
 
@@ -12,8 +13,8 @@ def callback2(data):
 
 
 model.callbacks["on_fit_epoch_end"].append(callback2)
-model.train(dataset_dir=dataset_dir,
-            epochs=10, batch_size=1, grad_accum_steps=16, lr=1e-4, early_stopping=True, tensorboard=True, output_dir="rfdetr_large_results", checkpoint_interval=1, resume="./rfdetr_large_results/checkpoint0002.pth")
+model.train(dataset_dir=fine_tune_dataset_dir,
+            epochs=100, batch_size=1, grad_accum_steps=16, early_stopping=True, tensorboard=True, output_dir="rfdetr_large_results", checkpoint_interval=1, resume="./rfdetr_large_results/checkpoint_best_ema.pth")
 model.export()
 
 

@@ -1,2 +1,5 @@
 python export_to_onnx.py --checkpoint ../saved_models/rtdetr_v2_r101_fashionpedia-20250325_173024-epoch=00-validation_loss=8.73.ckpt --output epoch_rtdetr_v2_r101.onnx --pretrained_model PekingU/rtdetr_v2_r101vd --num_classes 46
 
+
+
+python dataset_preprocessing/train_val_test_split.py dataset_preprocessing/annotations/fashionveil_coco.json --train_size 0.6 --val_size 0.2 --test_size 0.2 --prepare_for_rfdetr "rfdetr"

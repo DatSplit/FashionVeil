@@ -1,0 +1,53 @@
+shirt
+blouse
+top, t-shirt, sweatshirt
+sweater
+cardigan
+jacket
+vest
+pants
+shorts
+skirt
+coat
+dress
+jumpsuit
+cape
+glasses
+earmuffs
+hat
+headband
+head covering
+hair accessory
+tie
+glove
+watch
+belt
+leg warmer
+tights
+stockings
+sock
+shoe
+bag
+wallet
+scarf
+umbrella
+hood
+collar
+lapel
+epaulette
+sleeve
+garment belt
+pocket
+neckline
+buckle
+zipper
+applique
+bead
+bow
+flower
+fringe
+ribbon
+rivet
+ruffle
+sequin
+tassel

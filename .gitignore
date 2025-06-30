@@ -25,3 +25,6 @@ FashionVeil.egg-info/
 *.0
 *.csv
 *.xlsx
+*.jpg
+*.Identifier
+events.out.tfevents.*

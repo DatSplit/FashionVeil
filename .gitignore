@@ -18,7 +18,6 @@ lightning_logs/
 .aim/
 *.onnx
 FashionVeil.egg-info/
-*.json
 *.pdf
 *.Identifier
 *:Zone.Identifier
@@ -84,3 +83,4 @@ MANIFEST
 *.xlsx
 *.csv
 *.npy
+.gitignore

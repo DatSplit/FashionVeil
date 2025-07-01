@@ -1,0 +1,538 @@
+python fashionfail/models/train_fashionunveil.py  \
+--train_img_dir "~/.cache/fashionpedia/images/train/" \
+--val_img_dir "~/.cache/fashionpedia/images/train/" \
+--train_ann "~/.cache/fashionpedia/fp_train.json" \
+--val_ann "~/.cache/fashionpedia/fp_val.json" \
+--batch_size 2 \
+--shuffle True \
+--accelerator gpu \
+--devices 1 \
+--precision 16 \
+--max_epochs 50 \
+--strategy "ddp" \
+--optimizer "adam" \
+--experiment-name "fashionunveil"
+
+run from src dir: 
+
+python fashionfail/models/export_to_onnx.py \
+--ckpt_path "saved_models/facere_base_swin_b-epoch=00-val_loss_sum=1.37.ckpt" \
+--onnx_path "facere_base_swin_b.onnx" \
+--model_class "facere_base_swin_b"
+
+python fashionfail/models/predict_models.py \
+--model_name "facere_base_swin_b" \
+--image_dir "/home/datsplit/.cache/fashionpedia/images/test" \
+--out_dir "predictions_fashionpedia_val/"
+
+python fashionfail/models/evaluate.py \
+    --preds_path "/home/datsplit/model_development/fashionfail/src/predictions_fashionpedia_val/facere_base_swin_b.npz" \
+    --anns_path "/home/datsplit/.cache/fashionpedia/instances_attributes_val2020.json" \
+    --eval_method "COCO" \
+    --model_name "facere" \
+    --iou_type "bbox"
+
+official:
+
+python fashionfail/models/predict_models.py \
+--model_name "facere_base" \
+--image_dir "/home/datsplit/.cache/fashionpedia/images/test" \
+--out_dir "predictions_fashionpedia_val/"
+
+python fashionfail/models/evaluate.py \
+    --preds_path "/home/datsplit/model_development/fashionfail/src/predictions_fashionpedia_val/facere_base.npz" \
+    --anns_path "/home/datsplit/.cache/fashionpedia/instances_attributes_val2020.json" \
+    --eval_method "COCO" \
+    --model_name "facere" \
+    --iou_type "bbox"
+
+test-single-epoch-facere-base-performance:
+
+python fashionfail/models/export_to_onnx.py \
+--ckpt_path "saved_models/facere_base-epoch=00-val_loss_sum=0.98.ckpt" \
+--onnx_path "facere_1_epoch.onnx" \
+--model_class "facere_base"
+
+python fashionfail/models/predict_models.py \
+--model_name "facere_base" \
+--image_dir "/home/datsplit/.cache/fashionpedia/images/test" \
+--out_dir "predictions_fashionpedia_val/"
+
+python fashionfail/models/evaluate.py \
+    --preds_path "/home/datsplit/model_development/fashionfail/src/predictions_fashionpedia_val/facere_base.npz" \
+    --anns_path "/home/datsplit/.cache/fashionpedia/instances_attributes_val2020.json" \
+    --eval_method "COCO" \
+    --model_name "facere" \
+    --iou_type "bbox"
+
+
+https://github.com/pytorch/pytorch/issues/94434
+
+
+python fashionfail/models/train_facere_base.py  \
+--train_img_dir "~/.cache/fashionpedia/images/train/" \
+--val_img_dir "~/.cache/fashionpedia/images/train/" \
+--train_ann "~/.cache/fashionpedia/fp_train_rle.json" \
+--val_ann "~/.cache/fashionpedia/fp_val_rle.json" \
+--batch_size 4 \
+--shuffle True \
+--accelerator gpu \
+--devices 1 \
+--precision 16 \
+--max_epochs 50 \
+--strategy "ddp" \
+--optimizer "adam" \
+--experiment-name "facere_base"
+
+
+OWN MODELS:
+
+Predict:
+
+python fashionfail/models/predict_rtdetr.py \
+--model_name "rtdetr" \
+--image_dir "/home/datsplit/.cache/fashionpedia/images/test" \
+--out_dir "predictions_fashionpedia_val/"
+
+Evaluate:
+
+python fashionfail/models/evaluate.py \
+    --preds_path "/home/datsplit/model_development/fashionfail/src/predictions_fashionpedia_val/rtdetr.npz" \
+    --anns_path "/home/datsplit/.cache/fashionpedia/instances_attributes_val2020.json" \
+    --eval_method "COCO" \
+    --model_name "rtdetr" \
+    --iou_type "bbox"
+
+
+
+    --------------------------------------------------------
+
+    Predict:
+
+# In root dir
+cd fashionfail/src
+
+python fashionfail/models/predict_rfdetr_b.py \
+--model_name "rfdetr" \
+--image_dir "/home/datsplit/.cache/fashionpedia/images/test" \
+--out_dir "predictions_fashionpedia_val/" \
+--confidence_threshold 0.1
+
+Evaluate:
+python fashionfail/models/evaluate_new.py \
+    --preds_path "/home/datsplit/model_development/fashionfail/src/predictions_fashionpedia_val/rfdetr_0.1.npz" \
+    --anns_path "/home/datsplit/.cache/fashionpedia/instances_attributes_val2020.json" \
+    --eval_method "COCO" \
+    --model_name "rfdetr" \
+    --iou_type "bbox" \
+    --benchmark_dataset "fashionpedia"
+
+python fashionfail/models/evaluate.py \
+    --preds_path "/home/datsplit/model_development/fashionfail/src/predictions_fashionpedia_val/rfdetr.npz" \
+    --anns_path "/home/datsplit/.cache/fashionpedia/instances_attributes_val2020.json" \
+    --eval_method "COCO" \
+    --model_name "rfdetr" \
+    --iou_type "bbox"
+
+python fashionfail/models/evaluate.py \
+    --preds_path "/home/datsplit/model_development/fashionfail/src/predictions_fashionpedia_val/rfdetr.npz" \
+    --anns_path "/home/datsplit/.cache/fashionpedia/instances_attributes_val2020.json" \
+    --eval_method "all" \
+    --model_name "rfdetr" \
+    --iou_type "bbox"
+    --------------------
+
+    python visualize_rfdetr_predictions.py --model_name rfdetr --image_dir "test_images" --out_dir "./result_test_images" --confidence_threshold 0.4
+
+
+
+    ---------------------------------------------
+
+
+    Experiment: performance of models on the FashionVeil dataset WHOLE dataset:	
+    RFDETR:
+
+    python fashionfail/models/predict_rfdetr.py \
+    --model_name "rfdetr" \
+    --image_dir "/home/datsplit/model_development/FashionVeil_supercategories" \
+    --out_dir "predictions_fashionveil_all/" \
+    --fashionveil_mapping True
+
+    Specific occlusion levels: 
+
+    python fashionfail/models/evaluate_new.py \
+    --preds_path "/home/datsplit/model_development/fashionfail/src/predictions_fashionveil_all/rfdetr.npz" \
+    --anns_path "/home/datsplit/model_development/fashionveil_coco.json" \
+    --eval_method "COCO" \
+    --model_name "rfdetr" \
+    --iou_type "bbox" \
+    --occlusion_anns True
+    --benchmark_dataset "fashionveil"
+
+    Overall:
+
+    python fashionfail/models/evaluate_new.py \
+    --preds_path "/home/datsplit/model_development/fashionfail/src/predictions_fashionveil_all/rfdetr.npz" \
+    --anns_path "/home/datsplit/model_development/fashionveil_coco.json" \
+    --eval_method "COCO" \
+    --model_name "rfdetr" \
+    --iou_type "bbox" \
+    --benchmark_dataset "fashionveil"
+
+
+
+    python fashionfail/models/predict_rfdetr_b.py \
+    --model_name "rfdetr" \
+    --image_dir "/home/datsplit/model_development/FashionVeil_supercategories" \
+    --out_dir "predictions_fashionveil_rfdetrb_all/" \
+    --fashionveil_mapping True
+
+    Overall:
+
+    python fashionfail/models/evaluate_new.py \
+    --preds_path "/home/datsplit/model_development/fashionfail/src/predictions_fashionveil_rfdetrb_all/rfdetr.npz" \
+    --anns_path "/home/datsplit/model_development/fashionveil_coco.json" \
+    --eval_method "COCO" \
+    --model_name "rfdetr" \
+    --iou_type "bbox" \
+    --benchmark_dataset "fashionveil"
+
+
+    Facere:
+    python fashionfail/models/predict_models.py \
+    --model_name "facere_base" \
+    --image_dir "/home/datsplit/model_development/FashionVeil_supercategories" \
+    --out_dir "predictions_facere_all/" \
+    --fashionveil_mapping True
+
+    python fashionfail/models/evaluate_new.py \
+    --preds_path "/home/datsplit/model_development/fashionfail/src/predictions_facere_all/facere_base.npz" \
+    --anns_path "/home/datsplit/model_development/fashionveil_coco.json" \
+    --eval_method "COCO" \
+    --model_name "facere" \
+    --iou_type "bbox" \
+    --benchmark_dataset "fashionveil"
+
+    python fashionfail/models/evaluate_new.py \
+    --preds_path "/home/datsplit/model_development/fashionfail/src/predictions_facere_all/facere_base.npz" \
+    --anns_path "/home/datsplit/model_development/fashionveil_coco.json" \
+    --eval_method "COCO" \
+    --model_name "facere" \
+    --iou_type "bbox" \
+    --occlusion_anns True \
+    --benchmark_dataset "fashionveil"
+
+
+    FashionFormer:
+
+    python src/fashionfail/models/predict_fformer.py \
+    --model_path "./FashionFormer/ckpts/fashionformer_swin_b_3x.pth" \
+    --config_path  "./FashionFormer/configs/fashionformer/fashionpedia/fashionformer_swin_b_mlvl_feat_6x.py"\
+    --out_dir "predictions_fashionformer_swinb/" \
+    --image_dir "/home/datsplit/model_development/FashionVeil_supercategories" \
+    --dataset_name "fashionveil" \
+    --fashionveil_mapping True \
+    --score_threshold 0.05
+
+
+
+    Overall: 
+
+    python fashionfail/models/evaluate_new.py \
+    --preds_path "/home/datsplit/model_development/fashionfail/predictions_fashionformer_all/fashionformer_r50_3x-fashionveil.npz" \
+    --anns_path "/home/datsplit/model_development/fashionveil_coco.json" \
+    --eval_method "COCO" \
+    --model_name "fformer" \
+    --iou_type "bbox" \
+    --benchmark_dataset "fashionveil"
+
+ Occlusion specific:
+python fashionfail/models/evaluate_new.py \
+    --preds_path "/home/datsplit/model_development/fashionfail/predictions_fashionformer_all/fashionformer_r50_3x-fashionveil.npz" \
+    --anns_path "/home/datsplit/model_development/fashionveil_coco.json" \
+    --eval_method "COCO" \
+    --model_name "fformer" \
+    --iou_type "bbox" \
+    --occlusion_anns True \
+    --benchmark_dataset "fashionveil"
+
+    SWIN B: 
+    python src/fashionfail/models/predict_fformer.py \
+    --model_path "./FashionFormer/ckpts/fashionformer_r50_3x.pth" \
+    --config_path  "./FashionFormer/configs/fashionformer/fashionpedia/fashionformer_r50_mlvl_feat_3x.py"\
+    --out_dir "predictions_fashionformer_all/" \
+    --image_dir "/home/datsplit/model_development/FashionVeil_supercategories" \
+    --dataset_name "fashionveil" \
+    --fashionveil_mapping True \
+    --score_threshold 0.05
+
+
+    Overall: 
+
+    python fashionfail/models/evaluate_new.py \
+    --preds_path "/home/datsplit/model_development/fashionfail/predictions_fashionformer_swinb/fashionformer_swin_b_3x-fashionveil.npz" \
+    --anns_path "/home/datsplit/model_development/fashionveil_coco.json" \
+    --eval_method "COCO" \
+    --model_name "fformer" \
+    --iou_type "bbox" \
+    --benchmark_dataset "fashionveil"
+
+ Occlusion specific:
+python fashionfail/models/evaluate_new.py \
+    --preds_path "/home/datsplit/model_development/fashionfail/predictions_fashionformer_swinb/fashionformer_swin_b_3x-fashionveil.npz" \
+    --anns_path "/home/datsplit/model_development/fashionveil_coco.json" \
+    --eval_method "COCO" \
+    --model_name "fformer" \
+    --iou_type "bbox" \
+    --occlusion_anns True \
+    --benchmark_dataset "fashionveil"
+
+
+    AMRCNN:
+
+    tar -cvf fashionveil.tar /home/datsplit/model_development/FashionVeil_supercategories/*.png
+    mkdir -p outputs
+
+    python inference_fashion.py \
+    --model="attribute_mask_rcnn" \
+    --config_file="projects/fashionpedia/configs/yaml/spinenet143_amrcnn.yaml" \
+    --checkpoint_path="fashionpedia-spinenet-143/model.ckpt" \
+    --label_map_file="projects/fashionpedia/dataset/fashionpedia_label_map.csv" \
+    --output_html="out.html" --max_boxes_to_draw=8 --min_score_threshold=0.01 \
+    --image_size="640" \
+    --image_file_pattern="./fashionveil.tar" \
+    --output_file="outputs/spinenet143-fv_all.npy"
+
+    mkdir -p preds
+    python fashionfail/models/convert_amrcnn_labels.py \
+    --predictions_path="/home/datsplit/model_development/tpu/models/official/detection/outputs/spinenet143-fv_all.npy" \
+    --output_file="./preds/spinenet143-fv_all.npy"
+
+        Overall: 
+
+    python fashionfail/models/evaluate_new.py \
+    --preds_path "/home/datsplit/model_development/fashionfail/src/preds/spinenet143-fv_all.npy" \
+    --anns_path "/home/datsplit/model_development/fashionveil_coco.json" \
+    --eval_method "COCO" \
+    --model_name "amrcnn" \
+    --iou_type "bbox" \
+    --benchmark_dataset "fashionveil"
+
+ Occlusion specific:
+python fashionfail/models/evaluate_new.py \
+    --preds_path "/home/datsplit/model_development/fashionfail/src/preds/spinenet143-fv_all.npy" \
+    --anns_path "/home/datsplit/model_development/fashionveil_coco.json" \
+    --eval_method "COCO" \
+    --model_name "amrcnn" \
+    --iou_type "bbox" \
+    --occlusion_anns True \
+    --benchmark_dataset "fashionveil"
+
+
+    OTHER BACKBONE: 
+    
+    python inference_fashion.py \
+    --model="attribute_mask_rcnn" \
+    --config_file="projects/fashionpedia/configs/yaml/r50fpn_amrcnn.yaml" \
+    --checkpoint_path="fashionpedia-r50-fpn/model.ckpt" \
+    --label_map_file="projects/fashionpedia/dataset/fashionpedia_label_map.csv" \
+    --output_html="out.html" --max_boxes_to_draw=8 --min_score_threshold=0.01 \
+    --image_size="640" \
+    --image_file_pattern="./fashionveil.tar" \
+    --output_file="outputs/r50fpn-fv_all.npy"
+
+    mkdir -p preds
+    python fashionfail/models/convert_amrcnn_labels.py \
+    --predictions_path="/home/datsplit/model_development/tpu/models/official/detection/outputs/r50fpn-fv_all.npy" \
+    --output_file="./preds/r50fpn-fv_all.npy"
+
+        Overall: 
+
+    python fashionfail/models/evaluate_new.py \
+    --preds_path "/home/datsplit/model_development/fashionfail/src/preds/r50fpn-fv_all.npy" \
+    --anns_path "/home/datsplit/model_development/fashionveil_coco.json" \
+    --eval_method "COCO" \
+    --model_name "amrcnn" \
+    --iou_type "bbox" \
+    --benchmark_dataset "fashionveil"
+
+ Occlusion specific:
+python fashionfail/models/evaluate_new.py \
+    --preds_path "/home/datsplit/model_development/fashionfail/src/preds/r50fpn-fv_all.npy" \
+    --anns_path "/home/datsplit/model_development/fashionveil_coco.json" \
+    --eval_method "COCO" \
+    --model_name "amrcnn" \
+    --iou_type "bbox" \
+    --occlusion_anns True \
+    --benchmark_dataset "fashionveil"
+
+
+
+
+---------------
+Experiment: mAP@0.5_w - confidence curve
+	
+RFDETR:
+    python /home/datsplit/model_development/fashionfail/src/fashionfail/models/experiments/map_w_50_confidence.py
+    python fashionfail/models/predict_rfdetr.py \
+    --model_name "rfdetr" \
+    --image_dir "/home/datsplit/model_development/FashionVeil_supercategories" \
+    --out_dir "predictions_fashionveil_all/" \
+    --fashionveil_mapping True \
+    --confidence_threshold 0.1 \
+
+
+python fashionfail/models/evaluate_new.py \
+    --preds_path "/home/datsplit/model_development/fashionfail/src/predictions_fashionveil_all/rfdetr_0.1.npz" \
+    --anns_path "/home/datsplit/model_development/fashionveil_coco.json" \
+    --eval_method "COCO" \
+    --model_name "rfdetr" \
+    --iou_type "bbox" \
+    --benchmark_dataset "fashionveil"
+
+python fashionfail/models/evaluate_new.py \
+    --preds_path "/home/datsplit/model_development/fashionfail/src/predictions_fashionveil_all/rfdetr_0.1.npz" \
+    --anns_path "/home/datsplit/model_development/fashionveil_coco.json" \
+    --eval_method "COCO" \
+    --model_name "rfdetr" \
+    --iou_type "bbox" \
+    --occlusion_anns True \
+    --benchmark_dataset "fashionveil"
+
+--------------------------------------------------------------
+
+FashionVeil test!
+    
+    python /home/datsplit/model_development/fashionfail/src/fashionfail/models/filter_test_preds.py \
+        --pred_path /home/datsplit/model_development/fashionfail/src/predictions_fashionveil_all/rfdetr_0.1-coco.json \
+        --test_json /home/datsplit/model_development/fashionveil_test.json \
+        --out_path /home/datsplit/model_development/fashionfail/src/predictions_fashionveil_all/rfdetr_0.1-coco.json
+
+    python fashionfail/models/evaluate_new.py \
+    --preds_path "/home/datsplit/model_development/fashionfail/src/predictions_fashionveil_all/rfdetr_0.1_test.npz" \
+    --anns_path "/home/datsplit/model_development/fashionveil_test.json" \
+    --eval_method "COCO" \
+    --model_name "rfdetr" \
+    --iou_type "bbox" \
+    --benchmark_dataset "fashionveil"
+
+python fashionfail/models/predict_rfdetr_finetuned_fashionveil.py \
+    --model_name "rfdetr" \
+    --image_dir "/home/datsplit/model_development/FashionVeil_supercategories" \
+    --out_dir "predictions_fashionveil_finetuned_fashionveil/" \
+    --fashionveil_mapping True
+
+
+python /home/datsplit/model_development/fashionfail/src/fashionfail/models/filter_test_preds.py \
+    --pred_path /home/datsplit/model_development/fashionfail/src/predictions_fashionveil_finetuned_fashionveil/rfdetr_0.1-coco.json \
+    --test_json /home/datsplit/model_development/fashionveil_test.json \
+    --out_path /home/datsplit/model_development/fashionfail/src/predictions_fashionveil_finetuned_fashionveil/rfdetr_0.1-coco.json
+
+python fashionfail/models/evaluate_new.py \
+    --preds_path "/home/datsplit/model_development/fashionfail/src/predictions_fashionveil_finetuned_fashionveil/rfdetr_0.1.npz" \
+    --anns_path "/home/datsplit/model_development/fashionveil_test.json" \
+    --eval_method "COCO" \
+    --model_name "rfdetr" \
+    --iou_type "bbox" \
+    --benchmark_dataset "fashionveil"
+
+python fashionfail/models/evaluate_new.py \
+    --preds_path "/home/datsplit/model_development/fashionfail/src/predictions_fashionveil_finetuned_fashionveil/rfdetr_0.1.npz" \
+    --anns_path "/home/datsplit/model_development/fashionveil_test.json" \
+    --eval_method "COCO" \
+    --model_name "rfdetr" \
+    --iou_type "bbox" \
+    --occlusion_anns True \
+    --benchmark_dataset "fashionveil"
+
+python fashionfail/models/evaluate_new.py \
+    --preds_path "/home/datsplit/model_development/fashionfail/src/predictions_fashionveil_finetuned_fashionveil/rfdetr_0.1.npz" \
+    --anns_path "/home/datsplit/model_development/fashionveil_test.json" \
+    --eval_method "COCO" \
+    --model_name "rfdetr" \
+    --iou_type "bbox" \
+    --benchmark_dataset "fashionveil"
+
+
+    python fashionfail/models/evaluate_new.py \
+    --preds_path "/home/datsplit/model_development/fashionfail/src/predictions_fashionveil_all/rfdetr_0.1_test.npz" \
+    --anns_path "/home/datsplit/model_development/fashionveil_test.json" \
+    --eval_method "COCO" \
+    --model_name "rfdetr" \
+    --iou_type "bbox" \
+    --occlusion_anns True \
+    --benchmark_dataset "fashionveil"
+
+
+
+
+
+
+---- rfdetrb ----
+
+python fashionfail/models/predict_rfdetr_b.py \
+--model_name "rfdetr" \
+--image_dir "/home/datsplit/.cache/fashionpedia/images/test" \
+--out_dir "predictions_fashionpedia_val_base/" \
+--confidence_threshold 0.1
+
+python fashionfail/models/evaluate_new.py \
+    --preds_path "/home/datsplit/model_development/fashionfail/src/predictions_fashionpedia_val_base/rfdetr.npz" \
+    --anns_path "/home/datsplit/.cache/fashionpedia/instances_attributes_val2020.json" \
+    --eval_method "COCO" \
+    --model_name "rfdetr" \
+    --iou_type "bbox" \
+    --benchmark_dataset "fashionpedia"
+
+    python fashionfail/models/predict_rfdetr_b.py \
+    --model_name "rfdetr" \
+    --image_dir "/home/datsplit/model_development/FashionVeil_supercategories" \
+    --out_dir "predictions_fashionveil_all_base/" \
+    --fashionveil_mapping True
+
+
+    python fashionfail/models/evaluate_new.py \
+    --preds_path "/home/datsplit/model_development/fashionfail/src/predictions_fashionveil_all_base/rfdetr.npz" \
+    --anns_path "/home/datsplit/model_development/fashionveil_coco.json" \
+    --eval_method "COCO" \
+    --model_name "rfdetr" \
+    --iou_type "bbox" \
+    --benchmark_dataset "fashionveil"
+
+
+
+    ------- Radarplots ------
+    python fashionfail/models/predict_rfdetr.py \
+    --model_name "rfdetr" \
+    --image_dir "/home/datsplit/model_development/FashionVeil_supercategories" \
+    --out_dir "predictions_fashionveil_all/" \
+    --fashionveil_mapping True
+
+
+    python fashionfail/models/evaluate_new.py \
+    --preds_path "/home/datsplit/model_development/fashionfail/src/predictions_fashionveil_all/rfdetr_0.1.npz" \
+    --anns_path "/home/datsplit/model_development/fashionveil_coco.json" \
+    --eval_method "COCO" \
+    --model_name "rfdetr" \
+    --iou_type "bbox" \
+    --occlusion_anns True \
+    --benchmark_dataset "fashionveil"
+
+
+    python fashionfail/models/evaluate_new.py \
+    --preds_path "/home/datsplit/model_development/fashionfail/predictions_fashionformer_swinb/fashionformer_swin_b_3x-fashionveil.npz" \
+    --anns_path "/home/datsplit/model_development/fashionveil_coco.json" \
+    --eval_method "COCO" \
+    --model_name "fformer" \
+    --iou_type "bbox" \
+    --benchmark_dataset "fashionveil"
+
+
+        python fashionfail/models/evaluate_new.py \
+    --preds_path "/home/datsplit/model_development/fashionfail/src/predictions_fashionveil_finetuned_fashionveil/rfdetr_0.1.npz" \
+    --anns_path "/home/datsplit/model_development/fashionveil_test.json" \
+    --eval_method "COCO" \
+    --model_name "rfdetr" \
+    --iou_type "bbox" \
+    --occlusion_anns True \
+    --benchmark_dataset "fashionveil"

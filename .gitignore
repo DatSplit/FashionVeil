@@ -28,3 +28,6 @@ FashionVeil.egg-info/
 *.jpg
 *.Identifier
 events.out.tfevents.*
+fv/
+fv/lib/python3.12/site-packages/sympy/sets/conditionset.py
+*.zip

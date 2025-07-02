@@ -99,44 +99,37 @@ def get_cli_args_parser():
     return parser
 
 
-def predict_with_onnx(model_name, image_dir, out_dir, fashionveil_mapping):
-    # Load pre-trained model transformations.
+def predict_with_onnx(model_name: str, image_dir: str, out_dir: str, fashionveil_mapping: bool) -> None:
     weights = MaskRCNN_ResNet50_FPN_Weights.DEFAULT
     transforms = weights.transforms()
 
-    # Load model
     path_to_onnx = hf_hub_download(
         repo_id="rizavelioglu/fashionfail",
         filename=f"{model_name}.onnx",
         repo_type="model",
     )
-
-    # Create an inference session.
     ort_session = onnxruntime.InferenceSession(
         path_to_onnx, providers=[
             "CUDAExecutionProvider", "CPUExecutionProvider"]
     )
-
-    # Run inference on images, accumulate results in a list, save as `.npz` file.
     preds = []
     proba_threshold = 0.5
 
     logger.debug("Running inference now...")
-    # Support .jpg, .jpeg, .png images
     image_extensions = ("*.jpg", "*.jpeg", "*.png")
     image_files = []
     for ext in image_extensions:
         image_files.extend(glob(os.path.join(image_dir, ext)))
     for image in tqdm(image_files):
-        # Preprocess image
+        
         img = read_image(image)
-        # Ensure image is 3-channel (RGB)
+        
         if img.shape[0] == 4:
-            img = img[:3, ...]  # Drop alpha channel
+            img = img[:3, ...]
         elif img.shape[0] == 1:
-            img = img.repeat(3, 0)  # Convert grayscale to RGB
+            img = img.repeat(3, 0)
         img_transformed = transforms(img)
-        # Get predictions.
+       
         ort_inputs = {
             ort_session.get_inputs()[0].name: img_transformed.unsqueeze(
                 dim=0).numpy()
@@ -144,10 +137,9 @@ def predict_with_onnx(model_name, image_dir, out_dir, fashionveil_mapping):
         ort_outs = ort_session.run(None, ort_inputs)
         boxes, labels, scores, masks = ort_outs
 
-        # Process masks
         masks = masks.squeeze(1)
         filtered_masks = masks > proba_threshold
-        filtered_labels = labels  # default
+        filtered_labels = labels  
         filtered_boxes = boxes
         filtered_scores = scores
         filtered_encoded_masks = [
@@ -156,7 +148,6 @@ def predict_with_onnx(model_name, image_dir, out_dir, fashionveil_mapping):
         ]
 
         if fashionveil_mapping:
-            # Load new mapping from json
             with open("/home/datsplit/model_development/fashionveil_coco.json", "r") as f:
                 new_mapping = json.load(f)
             new_mapping = new_mapping["categories"]
@@ -166,25 +157,26 @@ def predict_with_onnx(model_name, image_dir, out_dir, fashionveil_mapping):
                 v: k for k, v in new_mapping_dict.items()}
             mapped_labels = []
             valid_indices = []
+
             for idx, id in enumerate(filtered_labels.tolist()):
                 original_name = ORIGINAL_CLASSES_MAPPING_DICT[id-1]
                 if original_name in new_mapping_dict.values():
                     mapped_id = reverse_new_mapping_dict[original_name]
                     mapped_labels.append(mapped_id)
                     valid_indices.append(idx)
-            # Filter outputs to only valid indices
+            
             filtered_labels = np.array(torch.tensor(mapped_labels))
             filtered_boxes = boxes[valid_indices]
             filtered_scores = scores[valid_indices]
             filtered_encoded_masks = [
                 filtered_encoded_masks[i] for i in valid_indices]
 
-        # Convert boxes to same format as `amrcnn` model
+        
         boxes_tensor = torch.tensor(filtered_boxes)
-        # if not fashionveil_mapping:
+        
         boxes_tensor = extended_box_convert(
             boxes_tensor, in_fmt="xyxy", out_fmt="yxyx")
-        # logger.debug(f"{filtered_labels}, og: {labels}")
+        
         preds.append(
             {
                 "image_file": Path(image).name,
@@ -195,9 +187,8 @@ def predict_with_onnx(model_name, image_dir, out_dir, fashionveil_mapping):
             }
         )
 
-    # Ensure output directory exists
+    
     os.makedirs(out_dir, exist_ok=True)
-    # Save results in a compressed `.npz` file
     out_file_name = model_name + ".npz"
     np.savez_compressed(os.path.join(out_dir, out_file_name), data=preds)
     logger.debug(
@@ -205,10 +196,8 @@ def predict_with_onnx(model_name, image_dir, out_dir, fashionveil_mapping):
 
 
 if __name__ == "__main__":
-    # Parse args
     parser = get_cli_args_parser()
     args = parser.parse_args()
 
-    # call the respective function
     predict_with_onnx(args.model_name, args.image_dir,
                       args.out_dir, args.fashionveil_mapping)

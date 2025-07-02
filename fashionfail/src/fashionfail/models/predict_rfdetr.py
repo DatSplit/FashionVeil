@@ -100,6 +100,12 @@ def get_cli_args_parser():
         default=0.1,
         help="Confidence threshold for filtering predictions."
     )
+    parser.add_argument(
+        "--onnx_path",
+        type=str,
+        default="./rfdetrl_best.onnx",
+        help="Path to the ONNX model file."
+    )
     return parser
 
 
@@ -129,8 +135,8 @@ def convert_to_absolute_coordinates(pred_boxes, image_size):
     return pred_boxes_abs
 
 
-def predict_with_onnx(model_name, image_dir, out_dir, fashionveil_mapping, confidence_threshold):
-    onnx_path = Path("/home/datsplit/model_development/rfdetrl_best.onnx")
+def predict_with_onnx(model_name, image_dir, out_dir, fashionveil_mapping, confidence_threshold, onnx_path):
+    onnx_path = Path(onnx_path) #"/home/datsplit/model_development/rfdetrl_best.onnx"
     session = onnxruntime.InferenceSession(str(onnx_path),
                                            providers=[
                                                'CUDAExecutionProvider', 'CPUExecutionProvider']
@@ -248,4 +254,4 @@ if __name__ == "__main__":
     # call the respective function
     print(args.fashionveil_mapping)
     predict_with_onnx(args.model_name, args.image_dir,
-                      args.out_dir, args.fashionveil_mapping, args.confidence_threshold)
+                      args.out_dir, args.fashionveil_mapping, args.confidence_threshold, args.onnx_path)

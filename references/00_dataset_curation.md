@@ -13,3 +13,11 @@ For the `FashionVeil` datasets with only the `Fashionpedia` categories, `curate_
 `filter_coco_annotations.py`: was run to split the complete `FashionVeil` dataset into the same splits as the `FashionVeil` supercategories dataset.
 
 `clean_unused_images.py`: was run to remove all images in the directory that are not in the corresponding annotation file. 
+
+---
+<div style="display: flex; justify-content: space-between;">
+
+
+   [Next: Dataset downloads](01_dataset_downloads.md)
+
+</div>

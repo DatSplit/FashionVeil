@@ -49,3 +49,11 @@ After training the model is automatically exported to `ONNX` in the `output` fol
 
 For a more detailed guide on exporting trained models to the `ONNX` format see: https://github.com/DatSplit/rf-detr_export_documentation/blob/feature/export-docs/rfdetr/docs/export.md
 
+---
+<div style="display: flex; justify-content: space-between;">
+
+   [Back](01_dataset_downloads.md)
+
+   [Next: Inference and evaluation](03_inference_and_evaluation.md)
+
+</div>

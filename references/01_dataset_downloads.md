@@ -34,4 +34,11 @@ There are three `FashionVeil` downloads available to reproduce the fine-tuning a
 
 These datasets can now be used to train and/or evaluate existing and new fashion apparel detection models!
 
+---
+<div style="display: flex; justify-content: space-between;">
 
+   [Back](00_dataset_curation.md)
+
+   [Next: Training](02_training.md)
+
+</div>

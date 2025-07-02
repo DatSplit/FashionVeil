@@ -275,12 +275,7 @@ curl https://storage.googleapis.com/cloud-tpu-checkpoints/detection/projects/fas
 tar -xf fashionpedia-r50-fpn.tar.gz
 ```
 
-Finally, we can run inference with:
-```bash
-    tar -cvf fashionveil.tar /home/datsplit/model_development/FashionVeil_supercategories/*.png
-    mkdir -p outputs
-```
-
+Finally, inference can be run with:
 ```bash
 cd some_path/fashionfail/tpu/models/official/detection
 python inference_fashion.py \
@@ -292,7 +287,12 @@ python inference_fashion.py \
     --image_size="640" \
     --image_file_pattern="LOCATION_OF_TAR ToDo" \ # "./fashionveil.tar" or "./fashionpedia.tar"
     --output_file="outputs/spinenet143-ff_test.npy"
+```
+For `FashionVeil` the images needs to be converted to a `.tar` file and the labels must correspond to the `FashionVeil` labels:
 
+```bash
+tar -cvf fashionveil.tar /home/datsplit/model_development/FashionVeil_supercategories/*.png
+mkdir -p outputs
 mkdir -p preds
 python fashionfail/models/convert_amrcnn_labels.py \
     --predictions_path="/home/datsplit/model_development/tpu/models/official/detection/outputs/spinenet143-fv_all.npy" \
@@ -410,23 +410,6 @@ python src/fashionfail/models/predict_fformer.py \
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 [paper_fformer]: https://arxiv.org/abs/2204.04654
 [code_fformer]: https://github.com/xushilin1/FashionFormer
 [models_fformer]: https://1drv.ms/u/s!Ai4mxaXd6lVBcAWlLG9x3sx8cKY?e=cBZdNy
@@ -437,3 +420,15 @@ python src/fashionfail/models/predict_fformer.py \
 [amrcnn_r50_ckpt]: https://storage.googleapis.com/cloud-tpu-checkpoints/detection/projects/fashionpedia/fashionpedia-r50-fpn.tar.gz
 [amrcnn_r50_cfg]: https://github.com/tensorflow/tpu/blob/master/models/official/detection/projects/fashionpedia/configs/yaml/r50fpn_amrcnn.yaml
 [facere_onnx]: https://huggingface.co/rizavelioglu/fashionfail/resolve/main/facere_base.onnx?download=true
+
+
+
+
+---
+<div style="display: flex; justify-content: space-between;">
+
+   [Back](02_training.md)
+
+   [Next: Visualization](04_visualization.md)
+
+</div>

@@ -7,6 +7,7 @@ curl -L "https://fashionpedia-rfdetr.s3.eu-central-1.amazonaws.com/rfdetr_fashio
 unzip -o fashionpedia_rfdetr.zip
 cd models/rfdetr
 python3 train_rfdetr.py \
+    --onnx_path "" \
     --dataset_dir "~/FashionVeil/rfdetr_fashionpedia/" \
     --model_type "base" \
     --output_dir "rfdetr_base_results" \

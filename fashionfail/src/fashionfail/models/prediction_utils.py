@@ -226,7 +226,7 @@ def convert_preds_to_coco(
     # Parse GT-images
     coco_imgs = pd.DataFrame(coco.imgs.values())
     # logger.info(coco.imgs.values())
-    # Convert the DataFrame to a list of dictionaries in the desired format
+
     json_data = []
     check = "fashionpedia" in anns_path
     logger.debug(
@@ -243,13 +243,11 @@ def convert_preds_to_coco(
             "image_id": int(image_id),
             # Subtract 1 to match official annotation in `amrcnn`
             "category_id": (
-
-                int(row["class"])
-
-                # if "fashionpedia" in anns_path
-                # else int(row["class"])
-
-            ),
+                # CHECK WHETHER THIS ALSO WORKS FOR FASHIONVEIL, we need benchmark dataset to determine this. use anns path.
+                int(row["class"]) - 1
+                if (model_name == "amrcnn" or model_name == "facere") and check
+                else int(row["class"])),
+            # int(row["class"])),
             # Round coordinates to the nearest tenth of a pixel
             "bbox": [round(float(coord), 1) for coord in row["bbox"]],
             "score": float(row["score"]),

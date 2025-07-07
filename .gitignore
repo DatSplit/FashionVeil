@@ -79,8 +79,9 @@ share/python-wheels/
 MANIFEST
 *.onnx
 *.npz
-*.json
 *.xlsx
 *.csv
 *.npy
+*.json
 .gitignore
+!fashionveil_coco.json

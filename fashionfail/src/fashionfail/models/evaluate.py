@@ -1,7 +1,6 @@
 from functools import lru_cache
 from typing import Literal
 import os
-import glob
 import json
 from collections import Counter
 import argparse
@@ -19,18 +18,12 @@ from fashionfail.models.prediction_utils import (
     convert_preds_to_coco,
 )
 from fashionfail.utils import load_categories, load_fashionveil_categories
-from fashionfail.models.mappings import (
-    map_occlusion_level_to_category,
-    map_label_to_category_id,
-)
 import tempfile
-import shutil
 from pathlib import Path
 from fashionfail.models.prediction_utils import convert_preds_to_coco
 
 
 def get_cli_args():
-    
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -96,7 +89,7 @@ def print_per_class_metrics(coco_eval: COCOeval, return_results: bool = False) -
     cat_names = [categories.get(cat_id) for cat_id in cat_ids]
     m_aps = []
     anns = coco_eval.cocoGt.dataset["annotations"]
-    
+
     cat_ann_count = Counter(ann["category_id"] for ann in anns)
 
     for c in cat_ids:
@@ -108,11 +101,10 @@ def print_per_class_metrics(coco_eval: COCOeval, return_results: bool = False) -
             m_ap = np.mean(pr[pr > -1])
         m_aps.append(m_ap)
     if cli_args.benchmark_dataset == "fashionveil":
-        m_aps_shifted = m_aps[1:] + m_aps[:1]
+        m_aps_shifted = m_aps[1:] + m_aps[:1]  # Hack to fix indexing.
     else:
         m_aps_shifted = m_aps
 
-    # Add #obj column
     n_objs = [cat_ann_count.get(c, 0) for c in cat_ids]
     if cli_args.benchmark_dataset == "fashionveil":
         m_aps_shifted = m_aps[1:] + m_aps[:1]
@@ -123,7 +115,6 @@ def print_per_class_metrics(coco_eval: COCOeval, return_results: bool = False) -
 
     cats = pd.DataFrame(
         {"name": cat_names, "AP": m_aps_shifted, "#obj": n_objs_shifted})
-    # Limit the number of characters to 15 for better readability
     cats["name"] = cats["name"].str.slice(0, 15)
 
     if not return_results:
@@ -252,7 +243,7 @@ def compute_map_weighted(coco_eval, anns_path, cli_args, area_idx=0, max_dets_id
     )
 
 
-def compute_map_weighted_by_occlusion(coco_eval, anns_path, area_idx=0, max_dets_idx=2):
+def compute_map_weighted_by_occlusion(coco_eval, anns_path, area_idx=0, max_dets_idx=2) -> None:
     """
     Calculate weighted mAP for different occlusion levels directly from COCO annotations.
 
@@ -265,7 +256,6 @@ def compute_map_weighted_by_occlusion(coco_eval, anns_path, area_idx=0, max_dets
 
     logger.info("Calculating mAP weighted by occlusion level:")
 
-    # Load full annotation file
     with open(anns_path, 'r') as f:
         data = json.load(f)
         annotations = data.get('annotations', [])
@@ -281,16 +271,9 @@ def compute_map_weighted_by_occlusion(coco_eval, anns_path, area_idx=0, max_dets
         occ_map[(image_id, ann_id)] = occlusion_level
 
     logger.info(f"Loaded occlusion data for {len(occ_map)} annotations.")
-
-    # Extract unique occlusion levels
     occlusion_levels = sorted(list(set(occ_map.values())))
     logger.info(f"Found occlusion levels: {occlusion_levels}")
 
-    # Get class frequencies (for weighting)
-    # cat_freqs = calculate_class_frequencies(anns_path)
-
-    # Find the predictions file path from the coco_eval object (hack: get from params)
-    # Instead, require the user to pass it, or get from cli_args
     preds_path = getattr(coco_eval, 'preds_path', None)
     if preds_path is None:
         try:
@@ -319,18 +302,16 @@ def compute_map_weighted_by_occlusion(coco_eval, anns_path, area_idx=0, max_dets
             'categories': categories
         }
 
-        # --- New: Filter predictions that overlap with other occlusion levels ---
-        # Collect GT boxes of other occlusion levels
         other_level_anns = [ann for ann in annotations if ann.get(
             'occlusion', "Unknown") != level]
         other_level_boxes = {}
         for ann in other_level_anns:
             img_id = ann['image_id']
-            bbox = ann['bbox']  # [x, y, w, h]
+            bbox = ann['bbox']
             other_level_boxes.setdefault(img_id, []).append(bbox)
 
         def compute_iou(box1, box2):
-            # box: [x, y, w, h]
+
             x1, y1, w1, h1 = box1
             x2, y2, w2, h2 = box2
             xa = max(x1, x2)
@@ -358,12 +339,8 @@ def compute_map_weighted_by_occlusion(coco_eval, anns_path, area_idx=0, max_dets
             logger.info(f"Loading predictions from: {coco_preds_file}")
             with open(coco_preds_file, 'r') as pf:
                 all_preds = json.load(pf)
-            # valid_cats = set(ann['category_id']
-            #                  for ann in filtered_annotations)
-            # --- New: Filter predictions that overlap with other occlusion levels ---
             filtered_preds = []
             for p in all_preds:
-                # or p['category_id'] not in valid_cats:
                 if p['image_id'] not in image_ids:
                     continue
                 overlaps = False
@@ -373,20 +350,11 @@ def compute_map_weighted_by_occlusion(coco_eval, anns_path, area_idx=0, max_dets
                         break
                 if not overlaps:
                     filtered_preds.append(p)
-            # Save filtered prediction file
             pred_file = os.path.join(tmpdir, f"preds_{level}.json")
+
             with open(pred_file, 'w') as pf:
                 json.dump(filtered_preds, pf)
-            # Save filtered annotation and prediction files to local dir for debugging
-            debug_dir = os.path.abspath("debug_occlusion_files")
-            os.makedirs(debug_dir, exist_ok=True)
-            debug_ann_file = os.path.join(debug_dir, f"anns_{level}.json")
-            debug_pred_file = os.path.join(debug_dir, f"preds_{level}.json")
-            shutil.copyfile(ann_file, debug_ann_file)
-            shutil.copyfile(pred_file, debug_pred_file)
-            logger.info(f"Saved debug ann_file: {debug_ann_file}")
-            logger.info(f"Saved debug pred_file: {debug_pred_file}")
-            # Run COCOeval
+
             coco = COCO(ann_file)
             coco_dt = coco.loadRes(pred_file)
             coco_eval_level = COCOeval(
@@ -401,10 +369,10 @@ def compute_map_weighted_by_occlusion(coco_eval, anns_path, area_idx=0, max_dets
             w_mar, w_mar1, w_mar100 = 0, 0, 0
             map_values = {}
             mar_values = {}
-            # logger.debug(f"Catfreqs - CHECK 14: {cat_freqs.items()}")
+
             for catId, catW in cat_freqs.items():
                 if catId not in catId_to_local_idx:
-                    continue  # skip categories not present in this occlusion level
+                    continue  # Skip categories not present in this occlusion level
                 local_idx = catId_to_local_idx[catId]
                 precision = coco_eval_level.eval["precision"][:,
                                                               :, local_idx, area_idx, max_dets_idx]
@@ -415,7 +383,7 @@ def compute_map_weighted_by_occlusion(coco_eval, anns_path, area_idx=0, max_dets
                     map_value = 0.0
                 map_values[catId] = map_value
                 w_map += catW * map_value if not np.isnan(map_value) else 0.0
-                # w-mAP50
+
                 precision_50 = coco_eval_level.eval["precision"][0,
                                                                  :, local_idx, area_idx, max_dets_idx]
                 valid_50 = precision_50 > -1
@@ -424,7 +392,7 @@ def compute_map_weighted_by_occlusion(coco_eval, anns_path, area_idx=0, max_dets
                 else:
                     ap_50 = 0.0
                 w_map_50 += catW * ap_50 if not np.isnan(ap_50) else 0.0
-                # w-mAP75
+
                 precision_75 = coco_eval_level.eval["precision"][5,
                                                                  :, local_idx, area_idx, max_dets_idx]
                 valid_75 = precision_75 > -1
@@ -433,7 +401,7 @@ def compute_map_weighted_by_occlusion(coco_eval, anns_path, area_idx=0, max_dets
                 else:
                     ap_75 = 0.0
                 w_map_75 += catW * ap_75 if not np.isnan(ap_75) else 0.0
-                # Weighted mAR (all maxDets)
+
                 recall = coco_eval_level.eval["recall"][:,
                                                         local_idx, area_idx, max_dets_idx]
                 valid_r = recall > -1
@@ -443,7 +411,7 @@ def compute_map_weighted_by_occlusion(coco_eval, anns_path, area_idx=0, max_dets
                     mar_value = 0.0
                 mar_values[catId] = mar_value
                 w_mar += catW * mar_value if not np.isnan(mar_value) else 0.0
-                # w-mAR1 (maxDets=1)
+
                 recall1 = coco_eval_level.eval["recall"][:,
                                                          local_idx, area_idx, 0]
                 valid_r1 = recall1 > -1
@@ -452,7 +420,7 @@ def compute_map_weighted_by_occlusion(coco_eval, anns_path, area_idx=0, max_dets
                 else:
                     mar1 = 0.0
                 w_mar1 += catW * mar1 if not np.isnan(mar1) else 0.0
-                # w-mAR100 (maxDets=100)
+
                 recall100 = coco_eval_level.eval["recall"][:,
                                                            local_idx, area_idx, 2]
                 valid_r100 = recall100 > -1
@@ -563,14 +531,12 @@ def get_cocoeval(
     else:
         coco_eval = COCOeval(coco, coco_dt, iouType=iou_type)
 
-    # Specify the category IDs for evaluation
     if cli_args.benchmark_dataset == "fashionveil":
         logger.info("Using FashionVeil categories for evaluation.")
         coco_eval.params.catIds = list(load_fashionveil_categories().keys())
     else:
         coco_eval.params.catIds = list(load_categories().keys())
 
-    # Run evaluation
     coco_eval.evaluate()
     coco_eval.accumulate()
 
@@ -578,7 +544,7 @@ def get_cocoeval(
 
 
 def eval_with_coco(args, use_extended_coco: bool = False) -> None:
-    # Convert predictions to COCO format
+
     logger.info(args.model_name)
     preds_path = convert_preds_to_coco(
         preds_path=args.preds_path, anns_path=args.anns_path, model_name=args.model_name
@@ -595,9 +561,6 @@ def eval_with_coco(args, use_extended_coco: bool = False) -> None:
     print_per_class_metrics(coco_eval)
     if use_extended_coco:
         print_tp_fp_fn_counts(coco_eval)
-
-    # Report mAP & mAR along with their weighted versions
-
     if args.occlusion_anns:
         logger.info(
             "Calculating mAP weighted by occlusion levels, using occlusion annotations."

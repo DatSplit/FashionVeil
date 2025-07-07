@@ -1,10 +1,81 @@
 import json
 from functools import lru_cache
 from pathlib import Path
+from typing import Tuple, Dict
 
 import torch
 from pycocotools.coco import COCO
 from torchvision.ops import box_convert
+
+ORIGINAL_CLASSES_MAPPING_DICT = {
+    0: "shirt, blouse",
+    1: "top, t-shirt, sweatshirt",
+    2: "sweater",
+    3: "cardigan",
+    4: "jacket",
+    5: "vest",
+    6: "pants",
+    7: "shorts",
+    8: "skirt",
+    9: "coat",
+    10: "dress",
+    11: "jumpsuit",
+    12: "cape",
+    13: "glasses",
+    14: "hat",
+    15: "headband, head covering, hair accessory",
+    16: "tie",
+    17: "glove",
+    18: "watch",
+    19: "belt",
+    20: "leg warmer",
+    21: "tights, stockings",
+    22: "sock",
+    23: "shoe",
+    24: "bag, wallet",
+    25: "scarf",
+    26: "umbrella",
+    27: "hood",
+    28: "collar",
+    29: "lapel",
+    30: "epaulette",
+    31: "sleeve",
+    32: "pocket",
+    33: "neckline",
+    34: "buckle",
+    35: "zipper",
+    36: "applique",
+    37: "bead",
+    38: "bow",
+    39: "flower",
+    40: "fringe",
+    41: "ribbon",
+    42: "rivet",
+    43: "ruffle",
+    44: "sequin",
+    45: "tassel"
+}
+
+
+def convert_to_absolute_coordinates(pred_boxes: torch.Tensor, image_size: Tuple[int, int]) -> torch.Tensor:
+    """
+    Convert relative coordinates to absolute pixel coordinates.
+
+    Args:
+        pred_boxes: Tensor with predicted boxes in relative coordinates (cx, cy, w, h).
+        image_size: Tuple (width, height) of the image.
+
+    Returns:
+        Tensor with absolute coordinates (cx, cy, w, h).
+    """
+    width, height = image_size
+    pred_boxes_abs = pred_boxes.clone()
+    pred_boxes_abs[:, 0] *= width
+    pred_boxes_abs[:, 1] *= height
+    pred_boxes_abs[:, 2] *= width
+    pred_boxes_abs[:, 3] *= height
+
+    return pred_boxes_abs
 
 
 @lru_cache
@@ -177,7 +248,7 @@ def extended_box_convert(
 
 
 @lru_cache
-def load_fashionveil_categories():
+def load_fashionveil_categories() -> Dict[int, str]:
     r"""
     Load FashionVeil categories from a JSON file and return a dictionary mapping category IDs to names.
 
@@ -192,9 +263,9 @@ def load_fashionveil_categories():
         >>> print(category_id_to_name.get(23))
         shoe
     """
-    expected_path = Path(
-        "/home/datsplit/model_development/fashionveil_coco.json")
 
+    home_dir = Path.home()
+    expected_path = home_dir / "FashionVeil" / "fashionveil_coco.json"
     if not expected_path.exists():
         raise FileNotFoundError(
             f"FashionVeil annotations are expected to be at: `{expected_path}`."

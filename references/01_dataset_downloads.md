@@ -2,7 +2,7 @@
 
 Three datasets are used for training, evaluation and inferencing of the models: Fashionpedia, Fashionpedia-divest, and FashionVeil.
 
-### Fashionpedia
+### Fashionpedia for RF-DETR
 
 RF-DETR requires a specific dataset structure, therefore separate versions of Fashionpedia and FashionVeil are available for training and evaluation.
 

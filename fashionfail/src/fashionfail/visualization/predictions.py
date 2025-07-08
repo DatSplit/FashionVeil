@@ -106,6 +106,7 @@ def visualize_bbox_predictions(
     figsize=(12, 12),
     out_path=None,
     benchmark_dataset="fashionveil",
+    filter_single_class_name=None,
 ):
     """
     Draw object detection predictions (bounding boxes) on raw images.
@@ -127,12 +128,19 @@ def visualize_bbox_predictions(
         fig (matplotlib.figure.Figure): The generated matplotlib figure.
     """
 
+    import random
+
+    random.seed(42)
+    all_images = [f for f in os.listdir(
+        img_folder) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+    sample_images = set(random.sample(all_images, min(100, len(all_images))))
+
     filtered_predictions = []
     for pred in predictions:
         img_path = os.path.join(img_folder, pred["image_file"])
-        if os.path.exists(img_path):
+        if os.path.exists(img_path) and pred["image_file"] in sample_images:
             filtered_predictions.append(pred)
-
+    filtered_predictions.sort(key=lambda x: x["image_file"])
     fig = plt.figure(dpi=dpi, figsize=figsize)
     if benchmark_dataset == "fashionveil":
         category_id_to_name = load_fashionveil_categories()
@@ -147,14 +155,16 @@ def visualize_bbox_predictions(
 
         score_mask = pred["scores"] > score_threshold
 
-        watch_mask = []
-        for cat_id in pred["classes"].tolist():
-            label = category_id_to_name[cat_id - 1]
-            watch_mask.append("watch" in label.lower())
-
-        watch_mask = np.array(watch_mask)
-
-        combined_mask = score_mask & watch_mask
+        if filter_single_class_name:
+            class_to_filter_mask = []
+            for cat_id in pred["classes"].tolist():
+                label = category_id_to_name[cat_id - 1]
+                class_to_filter_mask.append(
+                    filter_single_class_name in label.lower())
+            class_to_filter_mask = np.array(class_to_filter_mask)
+            combined_mask = score_mask & class_to_filter_mask
+        else:
+            combined_mask = score_mask
 
         boxes = pred["boxes"][combined_mask]
         scores = pred["scores"][combined_mask]

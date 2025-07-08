@@ -14,10 +14,22 @@ python visualize_bbox_predictions.py \
     --predictions_path "/home/datsplit/FashionVeil/fashionfail/predictions_fashionformer_swinb_fashionveil/fashionformer_swin_b_3x-fashionveil.npz" \
     --images_folder "/home/datsplit/FashionVeil/visualizations/smart_watch_images" \
     --output_folder "bbox_predictions" \
-    --score_threshold "0.2" \
+    --score_threshold "0.1" \
     --model_type "fformer" \
     --benchmark_dataset "fashionveil" \
-    --output_file_name "bbox_preds_smart_watches"
+    --output_file_name "bbox_preds_smart_watches" \
+    --filter_single_class_name "watch"
+
+
+python visualize_bbox_predictions.py \
+    --predictions_path "/home/datsplit/FashionVeil/fashionfail/src/predictions_fashionveil_all_rfdetrl/rfdetr_0.1.npz" \
+    --images_folder "/home/datsplit/FashionVeil/visualizations/smart_watch_images" \
+    --output_folder "bbox_predictions" \
+    --score_threshold "0.1" \
+    --model_type "rfdetr" \
+    --benchmark_dataset "fashionveil" \
+    --output_file_name "bbox_preds_smart_watches_rfdetrl" \
+    --filter_single_class_name "watch"
 ```
 
 

@@ -22,6 +22,12 @@ def main():
                         help='Benchmark dataset (fashionveil or other)')
     parser.add_argument('--output_file_name', type=str, default='bbox_predictions',
                         help='Name of the output file')
+    parser.add_argument('--n_row', type=int, default=10,
+                        help='Number of rows in the output visualization')
+    parser.add_argument('--n_col', type=int, default=10,
+                        help='Number of columns in the output visualization')
+    parser.add_argument('--filter_single_class_name', type=str,
+                        help='class name that you want to only shown in your visualization')
     args = parser.parse_args()
 
     predictions = np.load(args.predictions_path, allow_pickle=True)
@@ -40,7 +46,10 @@ def main():
         img_folder=args.images_folder,
         score_threshold=args.score_threshold,
         out_path=output_file,
-        benchmark_dataset=args.benchmark_dataset
+        benchmark_dataset=args.benchmark_dataset,
+        n_col=args.n_col,
+        n_row=args.n_row,
+        filter_single_class_name=args.filter_single_class_name,
     )
 
 

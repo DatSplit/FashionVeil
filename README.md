@@ -14,6 +14,4 @@ pip install -e .
 ```
 
 ### Usage
-Follow the instructions in `references/` for dataset creation, training, evaluation, inferencing, and visualizations.
-
-### Citation
+Follow the instructions in `references/` for dataset creation, training, evaluation, inferencing, and visualization of results.

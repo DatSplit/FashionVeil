@@ -10,7 +10,7 @@ from pycocotools import mask as mask_api
 from torchvision.io import read_image
 from torchvision.utils import draw_bounding_boxes, draw_segmentation_masks
 
-from fashionfail.utils import extended_box_convert, load_categories
+from fashionfail.utils import extended_box_convert, load_categories, load_fashionveil_categories
 
 
 # Helper Functions
@@ -68,18 +68,21 @@ def visualize_mask_predictions(
         masks = masks.type(torch.uint8)
 
         # Plot raw image on the first column (index 0)
-        axs[row, 0].imshow(mpimg.imread(os.path.join(img_folder, pred["image_file"])))
+        axs[row, 0].imshow(mpimg.imread(
+            os.path.join(img_folder, pred["image_file"])))
         axs[row, 0].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[])
         axs[row, 0].set_title(f"{pred['image_file']}", fontsize=9)
 
         # Plot each mask individually
         for col, (mask, label, score) in enumerate(
-            zip(masks[:top_k_masks], labels[:top_k_masks], scores[:top_k_masks]), 1
+            zip(masks[:top_k_masks], labels[:top_k_masks],
+                scores[:top_k_masks]), 1
         ):
             mask = F.to_pil_image(mask)
 
             axs[row, col].imshow(np.asarray(mask))
-            axs[row, col].set(xticklabels=[], yticklabels=[], xticks=[], yticks=[])
+            axs[row, col].set(xticklabels=[], yticklabels=[],
+                              xticks=[], yticks=[])
             axs[row, col].set_title(f"{label}: {score:.2f}", fontsize=9)
 
         # clear empty places
@@ -99,12 +102,13 @@ def visualize_bbox_predictions(
     bbox_width=3,
     n_row=10,
     n_col=10,
-    dpi=600,
-    figsize=(9, 9),
+    dpi=900,
+    figsize=(12, 12),
     out_path=None,
+    benchmark_dataset="fashionveil",
 ):
     """
-    Draw object detection predictions(bounding boxes) on raw images.
+    Draw object detection predictions (bounding boxes) on raw images.
 
     Args:
         predictions (np.array): An array of dictionaries representing the predictions.
@@ -123,24 +127,48 @@ def visualize_bbox_predictions(
         fig (matplotlib.figure.Figure): The generated matplotlib figure.
     """
 
-    fig = plt.figure(dpi=dpi, figsize=figsize)
-    category_id_to_name = load_categories()
+    filtered_predictions = []
+    for pred in predictions:
+        img_path = os.path.join(img_folder, pred["image_file"])
+        if os.path.exists(img_path):
+            filtered_predictions.append(pred)
 
+    fig = plt.figure(dpi=dpi, figsize=figsize)
+    if benchmark_dataset == "fashionveil":
+        category_id_to_name = load_fashionveil_categories()
+    else:
+        category_id_to_name = load_categories()
+    predictions = filtered_predictions
+    predictions = predictions[:n_row * n_col]
     for i, pred in enumerate(predictions):
         image = read_image(os.path.join(img_folder, pred["image_file"]))
-        boxes = pred["boxes"][pred["scores"] > score_threshold]
-        scores = pred["scores"][pred["scores"] > score_threshold]
+        if image.shape[0] == 4:
+            image = image[:3]
+
+        score_mask = pred["scores"] > score_threshold
+
+        watch_mask = []
+        for cat_id in pred["classes"].tolist():
+            label = category_id_to_name[cat_id - 1]
+            watch_mask.append("watch" in label.lower())
+
+        watch_mask = np.array(watch_mask)
+
+        combined_mask = score_mask & watch_mask
+
+        boxes = pred["boxes"][combined_mask]
+        scores = pred["scores"][combined_mask]
         labels = [
             (
                 category_id_to_name[cat_id - 1]
-                if model_type == "amrcnn"
-                else category_id_to_name[cat_id]
+                # if (model_type == "amrcnn" or model_type == "facere") and benchmark_dataset != "fashionveil"
+                # else category_id_to_name[cat_id]
             )
-            for cat_id in pred["classes"][pred["scores"] > score_threshold].tolist()
+            for cat_id in pred["classes"][combined_mask].tolist()
         ]
-        # Convert boxes to "xyxy" format
         in_fmt = "yxyx" if model_type == "amrcnn" else "xyxy"
-        boxes = extended_box_convert(torch.tensor(boxes), in_fmt=in_fmt, out_fmt="xyxy")
+        boxes = extended_box_convert(torch.tensor(
+            boxes), in_fmt=in_fmt, out_fmt="xyxy")
 
         # Sort the labels and scores by scores in descending order
         sorted_idx = np.argsort(scores)[::-1]
@@ -179,12 +207,14 @@ def visualize_bbox_predictions(
             horizontalalignment="left",
             verticalalignment="top",
             color="black",
-            bbox={"facecolor": "red", "alpha": 0.7, "pad": 0.7, "edgecolor": "none"},
+            bbox={"facecolor": "red", "alpha": 0.7,
+                  "pad": 0.7, "edgecolor": "none"},
             transform=ax.transAxes,
         )
 
     if out_path:
-        plt.savefig(f"{out_path}", dpi=fig.dpi, bbox_inches="tight", pad_inches=0)
+        plt.savefig(f"{out_path}", dpi=fig.dpi,
+                    bbox_inches="tight", pad_inches=0)
     plt.close(fig)
     return fig
 
@@ -239,7 +269,8 @@ def visualize_predictions(
         ]
         # Convert boxes to "xyxy" format
         in_fmt = "yxyx" if model_type == "amrcnn" else "xyxy"
-        boxes = extended_box_convert(torch.tensor(boxes), in_fmt=in_fmt, out_fmt="xyxy")
+        boxes = extended_box_convert(torch.tensor(
+            boxes), in_fmt=in_fmt, out_fmt="xyxy")
 
         # Sort the labels and scores by scores in descending order
         sorted_idx = np.argsort(scores)[::-1]
@@ -255,7 +286,8 @@ def visualize_predictions(
             decoded_masks = mask_api.decode(masks.tolist())
             decoded_masks = decoded_masks.transpose(2, 0, 1)  # from HWN to NHW
             decoded_masks = torch.tensor(decoded_masks.astype(bool))
-            img_with_masks = draw_segmentation_masks(image, decoded_masks, alpha=0.8)
+            img_with_masks = draw_segmentation_masks(
+                image, decoded_masks, alpha=0.8)
 
         # Draw bounding boxes on the image
         img_with_boxes = draw_bounding_boxes(
@@ -287,11 +319,13 @@ def visualize_predictions(
             horizontalalignment="left",
             verticalalignment="top",
             color="black",
-            bbox={"facecolor": "red", "alpha": 0.7, "pad": 0.7, "edgecolor": "none"},
+            bbox={"facecolor": "red", "alpha": 0.7,
+                  "pad": 0.7, "edgecolor": "none"},
             transform=ax.transAxes,
         )
 
     if out_path:
-        plt.savefig(f"{out_path}", dpi=fig.dpi, bbox_inches="tight", pad_inches=0)
+        plt.savefig(f"{out_path}", dpi=fig.dpi,
+                    bbox_inches="tight", pad_inches=0)
     plt.close(fig)
     return fig

@@ -51,7 +51,7 @@ Now the predictions (`preds_path`) can be evaluated based on the ground truth bo
 ```bash
 python fashionfail/models/evaluate.py \
     --preds_path "LOCATION_OF_PREDICTION_FILE" \
-    --anns_path "LOCATION_OF_GT_ANNOTATIONS_FILE" \
+    --anns_path "LOCATION_OF_GROUND_TRUTH_ANNOTATIONS_FILE" \
     --eval_method "COCO" \
     --model_name "rtdetr" \
     --iou_type "bbox" \
@@ -78,7 +78,7 @@ Now the predictions (`preds_path`) can be evaluated based on the ground truth bo
 ```bash
 python fashionfail/models/evaluate.py \
     --preds_path "LOCATION_OF_PREDICTION_FILE" \
-    --anns_path "LOCATION_OF_GT_ANNOTATIONS_FILE" \
+    --anns_path "LOCATION_OF_GROUND_TRUTH_ANNOTATIONS_FILE" \
     --eval_method "COCO" \
     --model_name "rfdetr" \
     --iou_type "bbox" \
@@ -102,7 +102,7 @@ The below block evaluates the predictions on the whole `FashionVeil` dataset.
 ```bash
     python fashionfail/models/evaluate.py \
         --preds_path "LOCATION_OF_PREDICTION_FILE" \
-        --anns_path "LOCATION_OF_GT_ANNOTATIONS_FILE" \
+        --anns_path "LOCATION_OF_GROUND_TRUTH_ANNOTATIONS_FILE" \
         --eval_method "COCO" \
         --model_name "rfdetr" \
         --iou_type "bbox" \
@@ -113,7 +113,7 @@ The below block evaluates the predictions on the `FashionVeil` dataset per occlu
 ```bash
     python fashionfail/models/evaluate.py \
         --preds_path "LOCATION_OF_PREDICTION_FILE" \
-        --anns_path "LOCATION_OF_GT_ANNOTATIONS_FILE" \
+        --anns_path "LOCATION_OF_GROUND_TRUTH_ANNOTATIONS_FILE" \
         --eval_method "COCO" \
         --model_name "rfdetr" \
         --iou_type "bbox" \
@@ -135,7 +135,7 @@ python fashionfail/models/predict_rfdetr.py \
 ```bash
 python fashionfail/models/evaluate.py \
     --preds_path "LOCATION_OF_PREDICTION_FILE" \
-    --anns_path "LOCATION_OF_GT_ANNOTATIONS_FILE" \
+    --anns_path "LOCATION_OF_GROUND_TRUTH_ANNOTATIONS_FILE" \
     --eval_method "COCO" \
     --model_name "rfdetr" \
     --iou_type "bbox" \
@@ -143,7 +143,7 @@ python fashionfail/models/evaluate.py \
 
 python fashionfail/models/evaluate.py \
     --preds_path "LOCATION_OF_PREDICTION_FILE" \
-    --anns_path "LOCATION_OF_GT_ANNOTATIONS_FILE" \
+    --anns_path "LOCATION_OF_GROUND_TRUTH_ANNOTATIONS_FILE" \
     --eval_method "COCO" \
     --model_name "rfdetr" \
     --occlusion_anns True \
@@ -171,7 +171,7 @@ Now the predictions (`preds_path`) can be evaluated based on the ground truth bo
 ```bash
 python fashionfail/models/evaluate.py \
     --preds_path "LOCATION_OF_PREDICTION_FILE" \
-    --anns_path "LOCATION_OF_GT_ANNOTATIONS_FILE" \
+    --anns_path "LOCATION_OF_GROUND_TRUTH_ANNOTATIONS_FILE" \
     --eval_method "COCO" \
     --model_name "facere" \
     --iou_type "bbox" \
@@ -186,15 +186,15 @@ The three code blocks below show how to calculate this for the `facere` model.
 ```bash
     python fashionfail/models/predict_models.py \
         --model_name "facere_base" \
-        --image_dir "DIRECTORY_OF_FASHIONVEIL_IMAGES" \ # Usually located at
+        --image_dir "DIRECTORY_OF_FASHIONVEIL_IMAGES" \
         --out_dir "predictions_fashionveil_all_facere_base/" \
         --fashionveil_mapping True
 ```
 The below block evaluates the predictions on the whole `FashionVeil` dataset.
 ```bash
     python fashionfail/models/evaluate.py \
-        --preds_path "LOCATION_OF_PREDICTION_FILE" \ # Usually located at ~/SOME_DIRECTORIES/predictions_fashionveil_all_facere_base/facere_base.npz
-        --anns_path "LOCATION_OF_GT_ANNOTATIONS_FILE" \ # Usually located at ~/SOME_DIRECTORIES/fashionveil_coco.json
+        --preds_path "LOCATION_OF_PREDICTION_FILE" \ 
+        --anns_path "LOCATION_OF_GROUND_TRUTH_ANNOTATIONS_FILE" \
         --eval_method "COCO" \
         --model_name "facere" \
         --iou_type "bbox" \
@@ -204,8 +204,8 @@ The below block evaluates the predictions on the whole `FashionVeil` dataset.
 The below block evaluates the predictions on the `FashionVeil` dataset per occlusion level.
 ```bash
     python fashionfail/models/evaluate_new.py \
-        --preds_path "LOCATION_OF_PREDICTION_FILE" \ # Usually located at ~/SOME_DIRECTORIES/predictions_fashionveil_all_facere_base/facere_base.npz
-        --anns_path "LOCATION_OF_GT_ANNOTATIONS_FILE" \ # Usually located at ~/SOME_DIRECTORIES/fashionveil_coco.json
+        --preds_path "LOCATION_OF_PREDICTION_FILE" \ 
+        --anns_path "LOCATION_OF_GROUND_TRUTH_ANNOTATIONS_FILE" \
         --eval_method "COCO" \
         --model_name "facere" \
         --iou_type "bbox" \
@@ -242,10 +242,15 @@ tar -xf fashionpedia-spinenet-143.tar.gz
 curl https://storage.googleapis.com/cloud-tpu-checkpoints/detection/projects/fashionpedia/fashionpedia-r50-fpn.tar.gz
 tar -xf fashionpedia-r50-fpn.tar.gz
 ```
+For `FashionVeil` and `Fashionpedia` the images needs to be converted to a `.tar` file and the labels must correspond to the `FashionVeil` labels:
+
+```bash
+tar -cvf fashionveil.tar /home/datsplit/FashionVeil/FashionVeil_all/*.png
+mkdir -p outputs
+```
 
 Finally, inference can be run with:
 ```bash
-cd some_path/fashionfail/tpu/models/official/detection
 python inference_fashion.py \
     --model="attribute_mask_rcnn" \
     --config_file="projects/fashionpedia/configs/yaml/spinenet143_amrcnn.yaml" \
@@ -253,34 +258,30 @@ python inference_fashion.py \
     --label_map_file="projects/fashionpedia/dataset/fashionpedia_label_map.csv" \
     --output_html="out.html" --max_boxes_to_draw=8 --min_score_threshold=0.01 \
     --image_size="640" \
-    --image_file_pattern="LOCATION_OF_TAR ToDo" \ # "./fashionveil.tar" or "./fashionpedia.tar"
-    --output_file="outputs/spinenet143-ff_test.npy"
+    --image_file_pattern="./fashionveil.tar" \
+    --output_file="outputs/spinenet143-fv.npy"
 ```
-For `FashionVeil` the images needs to be converted to a `.tar` file and the labels must correspond to the `FashionVeil` labels:
-
 ```bash
-tar -cvf fashionveil.tar /home/datsplit/model_development/FashionVeil_supercategories/*.png
-mkdir -p outputs
+cd $HOME/FashionVeil/fashionfail/src
 mkdir -p preds
 python fashionfail/models/convert_amrcnn_labels.py \
-    --predictions_path="/home/datsplit/model_development/tpu/models/official/detection/outputs/spinenet143-fv_all.npy" \
-    --output_file="./preds/spinenet143-fv_all.npy"
+    --predictions_path="LOCATION_OF_PREDICTION_FILE" \
+    --output_file="./preds/spinenet143-fv.npy"
 ```
 
-Now we can evaluate `amrcnn` on `Fashionpedia-test` and `FashionVeil` completely and per occlusion level.
-
+Now we can evaluate `amrcnn` on `Fashionpedia-test` or `FashionVeil` completely and per occlusion level. First switch the virtual environment to `fv`!
 ```bash
-    python fashionfail/models/evaluate_new.py \
-    --preds_path "/home/datsplit/model_development/fashionfail/src/preds/spinenet143-fv_all.npy" \
-    --anns_path "/home/datsplit/model_development/fashionveil_coco.json" \
+    python fashionfail/models/evaluate.py \
+    --preds_path "LOCATION_OF_PREDICTION_FILE" \
+    --anns_path "LOCATION_OF_GROUND_TRUTH_ANNOTATIONS_FILE" \
     --eval_method "COCO" \
     --model_name "amrcnn" \
     --iou_type "bbox" \
     --benchmark_dataset "fashionveil"
 
-python fashionfail/models/evaluate_new.py \
-    --preds_path "/home/datsplit/model_development/fashionfail/src/preds/spinenet143-fv_all.npy" \
-    --anns_path "/home/datsplit/model_development/fashionveil_coco.json" \
+python fashionfail/models/evaluate.py \
+    --preds_path "LOCATION_OF_PREDICTION_FILE" \
+    --anns_path "LOCATION_OF_GROUND_TRUTH_ANNOTATIONS_FILE" \
     --eval_method "COCO" \
     --model_name "amrcnn" \
     --iou_type "bbox" \
@@ -292,7 +293,7 @@ python fashionfail/models/evaluate_new.py \
 ### Inference on FashionFormer [[paper]][paper_fformer] [[code]][code_fformer]
 
 > [!IMPORTANT]
-> The following content is adapted from [Velioglu et at.](https://github.com/rizavelioglu/fashionfail):
+> The following content below is adapted from [Velioglu et at.](https://github.com/rizavelioglu/fashionfail):
 
 Create and activate the conda environment:
 ```bash
@@ -314,7 +315,7 @@ pip install torchmetrics
 
 Clone the repository and create a new directory for the model weights:
 ```bash
-cd /change/dir/to/fashionfail/repo/
+cd /change/dir/to/fashionfail/folder/
 git clone https://github.com/xushilin1/FashionFormer.git
 mkdir FashionFormer/ckpts
 ```
@@ -325,48 +326,31 @@ Download the models manually from [OneDrive][models_fformer] and place them insi
 python src/fashionfail/models/predict_fformer.py \
     --model_path "./FashionFormer/ckpts/fashionformer_swin_b_3x.pth" \
     --config_path  "./FashionFormer/configs/fashionformer/fashionpedia/fashionformer_swin_b_mlvl_feat_6x.py"\
-    --out_dir "predictions_fashionformer_swinb/" \
-    --image_dir "/home/datsplit/model_development/FashionVeil_supercategories" \
+    --out_dir "predictions_fashionformer_swinb_fashionveil/" \
+    --image_dir "DIRECTORY_OF_FASHIONVEIL_IMAGES" \
     --dataset_name "fashionveil" \
     --fashionveil_mapping True \
     --score_threshold 0.05
-
-python fashionfail/models/evaluate.py \
-    --preds_path "/home/datsplit/model_development/fashionfail/predictions_fashionformer_all/fashionformer_r50_3x-fashionveil.npz" \
-    --anns_path "/home/datsplit/model_development/fashionveil_coco.json" \
+```
+First switch the virtual environment to `fv`!
+```bash
+python src/fashionfail/models/evaluate.py \
+    --preds_path "LOCATION_OF_PREDICTION_FILE" \
+    --anns_path "LOCATION_OF_GROUND_TRUTH_ANNOTATIONS_FILE" \
     --eval_method "COCO" \
     --model_name "fformer" \
     --iou_type "bbox" \
     --benchmark_dataset "fashionveil"
 
 
-python fashionfail/models/evaluate.py \
-    --preds_path "/home/datsplit/model_development/fashionfail/predictions_fashionformer_all/fashionformer_r50_3x-fashionveil.npz" \
-    --anns_path "/home/datsplit/model_development/fashionveil_coco.json" \
+python src/fashionfail/models/evaluate.py \
+    --preds_path "LOCATION_OF_PREDICTION_FILE" \
+    --anns_path "LOCATION_OF_GROUND_TRUTH_ANNOTATIONS_FILE" \
     --eval_method "COCO" \
     --model_name "fformer" \
     --iou_type "bbox" \
     --occlusion_anns True \
     --benchmark_dataset "fashionveil"
-
-python fashionfail/models/evaluate.py \
-    --preds_path "/home/datsplit/model_development/fashionfail/predictions_fashionformer_swinb/fashionformer_swin_b_3x-fashionveil.npz" \
-    --anns_path "/home/datsplit/model_development/fashionveil_coco.json" \
-    --eval_method "COCO" \
-    --model_name "fformer" \
-    --iou_type "bbox" \
-    --benchmark_dataset "fashionveil"
-
-
-
-python src/fashionfail/models/predict_fformer.py \
-    --model_path "./FashionFormer/ckpts/fashionformer_r50_3x.pth" \
-    --config_path  "./FashionFormer/configs/fashionformer/fashionpedia/fashionformer_r50_mlvl_feat_3x.py"\
-    --out_dir "predictions_fashionformer_all/" \
-    --image_dir "/home/datsplit/model_development/FashionVeil_supercategories" \
-    --dataset_name "fashionveil" \
-    --fashionveil_mapping True \
-    --score_threshold 0.05
 ```
 
 

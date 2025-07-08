@@ -214,10 +214,9 @@ def predict(
             mask_api.encode(np.asfortranarray(mask.astype(np.uint8))) for mask in segms
         ]
         if fashionveil_mapping:
-            # logger.info("Mapping labels to FashionVeil category IDs...")
-            # Map labels to FashionVeil category_ids
-            # open .json with new category ids
-            with open("/home/datsplit/model_development/fashionveil_coco.json", "r") as f:
+            home_dir = Path.home()
+            fashionveil_coco_path = home_dir / "FashionVeil" / "fashionveil_coco.json"
+            with open(fashionveil_coco_path, "r") as f:
                 new_mapping = json.load(f)
             new_mapping = new_mapping["categories"]
             new_mapping_dict = {item["id"]: item["name"]

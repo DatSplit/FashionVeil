@@ -15,7 +15,7 @@ import fiftyone as fo
 import fiftyone.utils.coco as fouc
 from loguru import logger
 
-from fashionfail.utils import load_categories
+from fashionfail.utils import load_categories, load_fashionveil_categories
 
 
 def get_cli_args():
@@ -62,7 +62,7 @@ def add_predictions(dataset, preds_path, preds_name: str):
         label_field=preds_name,
         labels_or_path=preds_path,
         # classes=dataset.distinct("ground_truth_detections.detections.label"),
-        classes=list(load_categories().values()),
+        categories=list(load_fashionveil_categories().values()),
         label_type="detections",
     )
 
@@ -70,27 +70,29 @@ def add_predictions(dataset, preds_path, preds_name: str):
 if __name__ == "__main__":
     # Prediction paths of models
     # `amrcnn`
-    PREDS_AMRCNN_FF_TEST = "/home/rizavelioglu/work/repos/tpu/models/official/detection/outputs/spinenet143-ff_test(filtered).json"
-    PREDS_AMRCNN_FP_VAL = (
-        "/home/rizavelioglu/work/repos/tpu/models/official/detection/outputs/"
-    )
-    # `amrcnn-R50`
-    PREDS_AMRCNNR50_FF_TEST = "/home/rizavelioglu/work/repos/tpu/models/official/detection/outputs/r50fpn-ff_test(filtered).json"
-    PREDS_AMRCNNR50_FP_VAL = (
-        "/home/rizavelioglu/work/repos/tpu/models/official/detection/outputs/"
-    )
-    # `fformer`
-    PREDS_FFORMER_FF_TEST = "/home/rizavelioglu/work/repos/FashionFormer/outputs/fashionformer_swin_b_3x-ff-test(filtered).json"
-    PREDS_FFORMER_FP_VAL = "/home/rizavelioglu/work/repos/FashionFormer/outputs/"
-    # `fformer-R50`
-    PREDS_FFORMERR50_FF_TEST = "/home/rizavelioglu/work/repos/FashionFormer/outputs/fashionformer_r50_3x-ff-test(filtered).json"
-    PREDS_FFORMERR50_FP_VAL = "/home/rizavelioglu/work/repos/FashionFormer/outputs/"
+    # PREDS_AMRCNN_FF_TEST = "/home/rizavelioglu/work/repos/tpu/models/official/detection/outputs/spinenet143-ff_test(filtered).json"
+    # PREDS_AMRCNN_FP_VAL = (
+    #     "/home/rizavelioglu/work/repos/tpu/models/official/detection/outputs/"
+    # )
+    # # `amrcnn-R50`
+    # PREDS_AMRCNNR50_FF_TEST = "/home/rizavelioglu/work/repos/tpu/models/official/detection/outputs/r50fpn-ff_test(filtered).json"
+    # PREDS_AMRCNNR50_FP_VAL = (
+    #     "/home/rizavelioglu/work/repos/tpu/models/official/detection/outputs/"
+    # )
+    # # `fformer`
+    # PREDS_FFORMER_FF_TEST = "/home/rizavelioglu/work/repos/FashionFormer/outputs/fashionformer_swin_b_3x-ff-test(filtered).json"
+    # PREDS_FFORMER_FP_VAL = "/home/rizavelioglu/work/repos/FashionFormer/outputs/"
+    # # `fformer-R50`
+    # PREDS_FFORMERR50_FF_TEST = "/home/rizavelioglu/work/repos/FashionFormer/outputs/fashionformer_r50_3x-ff-test(filtered).json"
+    # PREDS_FFORMERR50_FP_VAL = "/home/rizavelioglu/work/repos/FashionFormer/outputs/"
     # `facere`
-    PREDS_FACERE_FF_TEST = "/home/rizavelioglu/work/repos/segmentation/segmentation/saved_models/facere_base/facere_2_ff-test(filtered).json"
-    PREDS_FACERE_FP_VAL = "/home/rizavelioglu/work/repos/segmentation/segmentation/saved_models/facere_base/"
+    # PREDS_FACERE_FF_TEST = "/home/rizavelioglu/work/repos/segmentation/segmentation/saved_models/facere_base/facere_2_ff-test(filtered).json"
+    # PREDS_FACERE_FP_VAL = "/home/rizavelioglu/work/repos/segmentation/segmentation/saved_models/facere_base/"
+    PREDS_RFDETRL_FV_ALL = "/home/datsplit/FashionVeil/fashionfail/src/predictions_fashionveil_all_rfdetrl/rfdetr_0.1-coco.json"
+    PREDS_FFORMER_FV_ALL = "/home/datsplit/FashionVeil/fashionfail/predictions_fashionformer_swinb_fashionveil/fashionformer_swin_b_3x-fashionveil-coco.json"
     # `facere_plus`
-    PREDS_FACEREP_FF_TEST = "/home/rizavelioglu/work/repos/segmentation/segmentation/saved_models/facere_plus_ff-test-coco.json"
-    PREDS_FACEREP_FP_VAL = "/home/rizavelioglu/work/repos/segmentation/segmentation/saved_models/facere_plus_fp-val-coco.json"
+    # PREDS_FACEREP_FF_TEST = "/home/rizavelioglu/work/repos/segmentation/segmentation/saved_models/facere_plus_ff-test-coco.json"
+    # PREDS_FACEREP_FP_VAL = "/home/rizavelioglu/work/repos/segmentation/segmentation/saved_models/facere_plus_fp-val-coco.json"
 
     # Parse cli arguments
     args = get_cli_args()
@@ -98,17 +100,22 @@ if __name__ == "__main__":
     try:
         fo_dataset = fo.load_dataset(args.dataset_name)
     except ValueError:
-        logger.info(f"{args.dataset_name} does not exist! Initializing one now...")
+        logger.info(
+            f"{args.dataset_name} does not exist! Initializing one now...")
         fo_dataset = init_fo_dataset(
             image_dir=args.image_dir, ann_path=args.anns_dir, name=args.dataset_name
         )
         logger.info(f"Adding predictions...")
-        add_predictions(fo_dataset, PREDS_AMRCNN_FF_TEST, "preds-amrcnn")
-        add_predictions(fo_dataset, PREDS_AMRCNNR50_FF_TEST, "preds-amrcnnR50")
-        add_predictions(fo_dataset, PREDS_FFORMER_FF_TEST, "preds-fformer")
-        add_predictions(fo_dataset, PREDS_FFORMERR50_FF_TEST, "preds-fformerR50")
-        add_predictions(fo_dataset, PREDS_FACERE_FF_TEST, "preds-facere")
-
+        # add_predictions(fo_dataset, PREDS_AMRCNN_FF_TEST, "preds-amrcnn")
+        # add_predictions(fo_dataset, PREDS_AMRCNNR50_FF_TEST, "preds-amrcnnR50")
+        # add_predictions(fo_dataset, PREDS_FFORMER_FF_TEST, "preds-fformer")
+        # add_predictions(fo_dataset, PREDS_FFORMERR50_FF_TEST,
+        #                 "preds-fformerR50")
+        # add_predictions(fo_dataset, PREDS_FACERE_FP_VAL, "preds-facere")
+        add_predictions(fo_dataset, PREDS_RFDETRL_FV_ALL,
+                        "rfdetrl_predictions_FashionVeil")
+        add_predictions(fo_dataset, PREDS_FFORMER_FV_ALL,
+                        "fformer_predictions_FashionVeil")
         # Save the dataset to disk
         fo_dataset.persistent = True
         fo_dataset.save()

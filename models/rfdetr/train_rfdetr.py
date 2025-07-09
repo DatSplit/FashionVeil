@@ -46,7 +46,6 @@ def main():
 
     args = parser.parse_args()
 
-    # Expand paths
     args.dataset_dir = os.path.expanduser(args.dataset_dir)
     if args.resume is not None:
         args.resume = os.path.expanduser(args.resume)
@@ -58,7 +57,7 @@ def main():
 
     if args.model_type == 'base':
         model = RFDETRBase(resolution=args.resolution)
-    else:  # large
+    else:
         model = RFDETRLarge(resolution=args.resolution)
 
     history = []
@@ -101,7 +100,7 @@ def main():
     )
 
     plt.title(
-        f'Train/Validation Loss over Epochs - RFDETR-{args.model_type.upper()}')
+        f'Train/Validation Loss over epochs - RFDETR-{args.model_type.upper()}')
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
     plt.legend()

@@ -15,7 +15,7 @@ import fiftyone as fo
 import fiftyone.utils.coco as fouc
 from loguru import logger
 
-from fashionfail.utils import load_categories, load_fashionveil_categories
+from fashionfail.utils import load_categories, load_fashionveil_categories, load_fashionpedia_divest_categories
 
 
 def get_cli_args():
@@ -55,6 +55,27 @@ def init_fo_dataset(image_dir, ann_path, name):
     return dataset
 
 
+# def init_fo_dataset(image_dir, ann_path, name):
+#     # Create empty dataset
+#     dataset = fo.Dataset(name)
+
+#     # Add images
+#     dataset.add_images_dir(image_dir)
+
+#     # Add COCO labels WITH custom fields (including occlusion)
+#     fouc.add_coco_labels(
+#         dataset,
+#         label_field="ground_truth",
+#         labels_or_path=ann_path,
+#         label_type="detections",
+#     )
+
+#     return dataset
+
+categories = ["cardigan", "jacket", "vest", "coat", "hat", "watch", "belt", "bag", "wallet",
+              "scarf", "hood", "earring", "necklace", "bracelet", "shoe_forbidden", "sunglasses"]
+
+
 def add_predictions(dataset, preds_path, preds_name: str):
     # And add model predictions
     fouc.add_coco_labels(
@@ -62,7 +83,7 @@ def add_predictions(dataset, preds_path, preds_name: str):
         label_field=preds_name,
         labels_or_path=preds_path,
         # classes=dataset.distinct("ground_truth_detections.detections.label"),
-        categories=list(load_fashionveil_categories().values()),
+        categories=list(load_fashionpedia_divest_categories().values()),
         label_type="detections",
     )
 
@@ -88,8 +109,8 @@ if __name__ == "__main__":
     # `facere`
     # PREDS_FACERE_FF_TEST = "/home/rizavelioglu/work/repos/segmentation/segmentation/saved_models/facere_base/facere_2_ff-test(filtered).json"
     # PREDS_FACERE_FP_VAL = "/home/rizavelioglu/work/repos/segmentation/segmentation/saved_models/facere_base/"
-    PREDS_RFDETRL_FV_ALL = "/home/datsplit/FashionVeil/fashionfail/src/predictions_fashionveil_all_rfdetrl/rfdetr_0.1-coco.json"
-    PREDS_FFORMER_FV_ALL = "/home/datsplit/FashionVeil/fashionfail/predictions_fashionformer_swinb_fashionveil/fashionformer_swin_b_3x-fashionveil-coco.json"
+    PREDS_RFDETRL_FV_ALL = "/home/datsplit/FashionVeil/fashionfail/src/predictions_fashionpedia_divest_test_only_rfdetrb/rfdetr_0.1-coco.json"
+    # PREDS_FFORMER_FV_ALL = "/home/datsplit/FashionVeil/fashionfail/predictions_fashionformer_swinb_fashionveil/fashionformer_swin_b_3x-fashionveil-coco.json"
     # `facere_plus`
     # PREDS_FACEREP_FF_TEST = "/home/rizavelioglu/work/repos/segmentation/segmentation/saved_models/facere_plus_ff-test-coco.json"
     # PREDS_FACEREP_FP_VAL = "/home/rizavelioglu/work/repos/segmentation/segmentation/saved_models/facere_plus_fp-val-coco.json"
@@ -99,7 +120,7 @@ if __name__ == "__main__":
 
     try:
         fo_dataset = fo.load_dataset(args.dataset_name)
-    except ValueError:
+    except fo.DatasetNotFoundError:
         logger.info(
             f"{args.dataset_name} does not exist! Initializing one now...")
         fo_dataset = init_fo_dataset(
@@ -113,9 +134,9 @@ if __name__ == "__main__":
         #                 "preds-fformerR50")
         # add_predictions(fo_dataset, PREDS_FACERE_FP_VAL, "preds-facere")
         add_predictions(fo_dataset, PREDS_RFDETRL_FV_ALL,
-                        "rfdetrl_predictions_FashionVeil")
-        add_predictions(fo_dataset, PREDS_FFORMER_FV_ALL,
-                        "fformer_predictions_FashionVeil")
+                        "rfdetrb_preds_fashionpedia_divest_test_only")
+        # add_predictions(fo_dataset, PREDS_FFORMER_FV_ALL,
+        #                 "fformer_predictions_FashionVeil")
         # Save the dataset to disk
         fo_dataset.persistent = True
         fo_dataset.save()

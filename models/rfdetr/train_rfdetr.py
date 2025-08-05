@@ -38,7 +38,7 @@ def main():
     parser.add_argument('--resolution', type=int, default=1120,
                         help='Image resolution')
     parser.add_argument('--output_dir', type=str, default=None,
-                        help='Output directory for training results (default: rfdetr_{model_type}_results)')
+                        help='Output directory for training results')
     parser.add_argument('--checkpoint_interval', type=int, default=1,
                         help='Checkpoint saving interval')
     parser.add_argument('--resume', type=str, default=None,

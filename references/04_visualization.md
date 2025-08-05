@@ -31,7 +31,17 @@ python visualize_bbox_predictions.py \
     --output_file_name "bbox_preds_smart_watches_rfdetrl" \
     --filter_single_class_name "watch"
 ```
+Explainability:
+```bash
+cd fashionfail/src/fashionfail/visualization
+python3 fiftyone_test.py \
+    --image_dir "/home/datsplit/FashionVeil/FashionVeil_all" \
+    --anns_dir "/home/datsplit/FashionVeil/FashionVeil_all/FashionVeil_supercategories.json" \
+    --dataset_name "predictions_FashionVeil"
+```
+Predicted bounding boxes of hood are quite often multiple times as large as the hood actually is for FasionFormer after visually the predictions in FiftyOne compared to fformer.
 
+PCA in bounding box predictions.
 
 ---
 <div style="display: flex; justify-content: space-between;">

@@ -35,7 +35,7 @@ def get_objects_and_occlusion_levels(annotation_dict: dict) -> list[tuple[str, f
     return objects_and_occlusion_levels
 
 
-def generate_histogram(data: pd.DataFrame, x: str, y: str, title: str, xlabel: str, ylabel: str, name_to_save: str, rotation: int) -> None:
+def generate_histogram(data: pd.DataFrame, x: str, y: str, title: str, xlabel: str, ylabel: str, name_to_save: str, rotation: int, show_labels: bool = True) -> None:
     colors = {
         "primary_dark": "#323a79",
         "primary_light": "#5EAADA",
@@ -53,12 +53,13 @@ def generate_histogram(data: pd.DataFrame, x: str, y: str, title: str, xlabel: s
     )
 
     # Add value labels on top of the bars
-    for p in bar_plot.patches:
-        bar_plot.annotate(f'{int(p.get_height())}',
-                          (p.get_x() + p.get_width() / 2., p.get_height()),
-                          ha='center', va='bottom',
-                          color=colors["primary_light"],
-                          fontsize=16, fontweight='bold')
+    if show_labels:
+        for p in bar_plot.patches:
+            bar_plot.annotate(f'{int(p.get_height())}',
+                              (p.get_x() + p.get_width() / 2., p.get_height()),
+                              ha='center', va='bottom',
+                              color=colors["primary_light"],
+                              fontsize=16, fontweight='bold')
 
     # Title and axis formatting
     plt.title(title, fontsize=30, color=colors["primary_dark"])

@@ -11,7 +11,7 @@ from loguru import logger
 from tqdm import tqdm
 from PIL import Image
 
-from fashionfail.utils import extended_box_convert, ORIGINAL_CLASSES_MAPPING_DICT
+from fashionfail.utils import extended_box_convert, ORIGINAL_CLASSES_MAPPING_DICT, FASHIONPEDIA_DIVEST_CLASSES_MAPPING_DICT
 
 
 def get_cli_args_parser():
@@ -55,10 +55,17 @@ def get_cli_args_parser():
         default="./rfdetrl_best.onnx",
         help="Path to the ONNX model file."
     )
+
+    parser.add_argument(
+        "--fashionpedia_divest_mapping",
+        type=bool,
+        default=False,
+        help="If set, will use the Fashionpedia divest mapping."
+    )
     return parser
 
 
-def predict_with_onnx(model_name, image_dir, out_dir, fashionveil_mapping, confidence_threshold, onnx_path):
+def predict_with_onnx(model_name, image_dir, out_dir, fashionveil_mapping, confidence_threshold, onnx_path, fashionpedia_divest_mapping):
     onnx_path = Path(onnx_path)
     session = onnxruntime.InferenceSession(str(onnx_path),
                                            providers=[
@@ -111,10 +118,15 @@ def predict_with_onnx(model_name, image_dir, out_dir, fashionveil_mapping, confi
         filtered_scores = max_scores.squeeze(0)[mask]
         filtered_labels = pred_labels.squeeze(0)[mask]
 
+        if fashionpedia_divest_mapping:
+            home_dir = Path.home()
+            conversion_path = home_dir / "FashionVeil" / "fashionpedia_divest_mapping.json"
         if fashionveil_mapping:
             home_dir = Path.home()
-            fashionveil_coco_path = home_dir / "FashionVeil" / "fashionveil_coco.json"
-            with open(fashionveil_coco_path, "r") as f:
+            conversion_path = home_dir / "FashionVeil" / "fashionveil_coco.json"
+
+        if fashionveil_mapping or fashionpedia_divest_mapping:
+            with open(conversion_path, "r") as f:
                 new_mapping = json.load(f)
             new_mapping = new_mapping["categories"]
             new_mapping_dict = {item["id"]: item["name"]
@@ -126,7 +138,12 @@ def predict_with_onnx(model_name, image_dir, out_dir, fashionveil_mapping, confi
             valid_indices = []
 
             for idx, id in enumerate(filtered_labels.tolist()):
-                original_name = ORIGINAL_CLASSES_MAPPING_DICT[id]
+
+                if fashionveil_mapping and not fashionpedia_divest_mapping:
+                    original_name = ORIGINAL_CLASSES_MAPPING_DICT[id]
+                if fashionpedia_divest_mapping:
+                    original_name = FASHIONPEDIA_DIVEST_CLASSES_MAPPING_DICT[id]
+
                 if original_name in new_mapping_dict.values():
                     mapped_id = reverse_new_mapping_dict[original_name]
                     mapped_labels.append(mapped_id)
@@ -161,4 +178,4 @@ if __name__ == "__main__":
 
     print(args.fashionveil_mapping)
     predict_with_onnx(args.model_name, args.image_dir,
-                      args.out_dir, args.fashionveil_mapping, args.confidence_threshold, args.onnx_path)
+                      args.out_dir, args.fashionveil_mapping, args.confidence_threshold, args.onnx_path, args.fashionpedia_divest_mapping)

@@ -56,6 +56,84 @@ ORIGINAL_CLASSES_MAPPING_DICT = {
     45: "tassel"
 }
 
+FASHIONPEDIA_DIVEST_CLASSES_MAPPING_DICT = {
+    0: "cardigan",
+    1: "jacket",
+    2: "vest",
+    3: "coat",
+    4: "hat",
+    5: "watch",
+    6: "belt",
+    7: "bag",
+    8: "wallet",
+    9: "scarf",
+    10: "hood",
+    11: "earring",
+    12: "necklace",
+    13: "bracelet",
+    14: "shoe_forbidden",
+    15: "sunglasses"
+}
+
+# FASHIONPEDIA_DIVEST_CLASSES_MAPPING_DICT = {
+#     0: "shirt, blouse",
+#     1: "top, t-shirt, sweatshirt",
+#     2: "sweater",
+#     3: "cardigan",
+#     4: "jacket",
+#     5: "vest",
+#     6: "pants",
+#     7: "shorts",
+#     8: "skirt",
+#     9: "coat",
+#     10: "dress",
+#     11: "jumpsuit",
+#     12: "cape",
+#     13: "glasses",
+#     14: "earmuffs",
+#     15: "hat",
+#     16: "headband, head covering, hair accessory",
+#     17: "tie",
+#     18: "glove",
+#     19: "watch",
+#     20: "belt",
+#     21: "leg warmer",
+#     22: "tights, stockings",
+#     23: "sock",
+#     24: "shoe",
+#     25: "bag",
+#     26: "wallet",
+#     27: "scarf",
+#     28: "umbrella",
+#     29: "hood",
+#     30: "collar",
+#     31: "lapel",
+#     32: "epaulette",
+#     33: "sleeve",
+#     34: "garment",
+#     35: "pocket",
+#     36: "neckline",
+#     37: "buckle",
+#     38: "zipper",
+#     39: "applique",
+#     40: "bead",
+#     41: "bow",
+#     42: "flower",
+#     43: "fringe",
+#     44: "ribbon",
+#     45: "rivet",
+#     46: "ruffle",
+#     47: "sequin",
+#     48: "tassel",
+#     49: "earring",
+#     50: "necklace",
+#     51: "bracelet",
+#     52: "shoe_heels",
+#     53: "shoe_ankle",
+#     54: "sunglasses",
+#     55: "bag, wallet"
+# }
+
 
 def convert_to_absolute_coordinates(pred_boxes: torch.Tensor, image_size: Tuple[int, int]) -> torch.Tensor:
     """
@@ -275,5 +353,38 @@ def load_fashionveil_categories() -> Dict[int, str]:
         categories = json.load(fp)["categories"]
 
     category_id_to_name = {d["id"]-1: d["name"] for d in categories}
+    print(category_id_to_name)
+    return category_id_to_name
+
+
+@lru_cache
+def load_fashionpedia_divest_categories() -> Dict[int, str]:
+    r"""
+    Load Fashionpedia Divest categories from a JSON file and return a dictionary mapping category IDs to names.
+
+    Returns:
+        Dict[int, str]: A dictionary where keys are category IDs (integers) and values are corresponding category names (strings).
+
+    Raises:
+        FileNotFoundError: If the expected JSON file 'fashionpedia_divest_mapping.json' is not found at the specified path.
+
+    Example:
+        >>> category_id_to_name = load_fashionpedia_divest_categories()
+        >>> print(category_id_to_name.get(23))
+        shoe
+    """
+
+    home_dir = Path.home()
+    # Add: new one.
+    expected_path = home_dir / "FashionVeil" / "fashionpedia_divest_only.json"
+    if not expected_path.exists():
+        raise FileNotFoundError(
+            f"Fashionpedia divest annotations are expected to be at: `{expected_path}`."
+        )
+
+    with open(expected_path) as fp:
+        categories = json.load(fp)["categories"]
+
+    category_id_to_name = {d["id"]: d["name"] for d in categories}
     print(category_id_to_name)
     return category_id_to_name

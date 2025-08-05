@@ -23,5 +23,10 @@ setup(
         f"fashionfail @ file://{fashionfail_path}",
         "onnxruntime-gpu==1.22.0",
         "pycocotools==2.0.8",
+        "fiftyone",
+        "wandb",
+        # OPTIONAL fiftyone plugins download \
+        # https://github.com/voxel51/fiftyone-plugins \
+        # --plugin-names @voxel51/brain
     ]
 )

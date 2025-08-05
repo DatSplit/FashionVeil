@@ -17,7 +17,7 @@ from fashionfail.models.prediction_utils import (
     bbox_conversion_formats,
     convert_preds_to_coco,
 )
-from fashionfail.utils import load_categories, load_fashionveil_categories
+from fashionfail.utils import load_categories, load_fashionveil_categories, load_fashionpedia_divest_categories
 import tempfile
 from pathlib import Path
 from fashionfail.models.prediction_utils import convert_preds_to_coco
@@ -71,7 +71,7 @@ def get_cli_args():
         "--benchmark_dataset",
         type=str,
         default="fashionveil",
-        choices=["fashionveil", "fashionpedia"],
+        choices=["fashionveil", "fashionpedia", "fashionpedia_divest"],
         help="The benchmark dataset to use for evaluation. Default is 'fashionveil'.",
     )
 
@@ -83,8 +83,10 @@ def print_per_class_metrics(coco_eval: COCOeval, return_results: bool = False) -
 
     if cli_args.benchmark_dataset == "fashionveil":
         categories = load_fashionveil_categories()
-    else:
+    elif cli_args.benchmark_dataset == "fashionpedia":
         categories = load_categories()
+    elif cli_args.benchmark_dataset == "fashionpedia_divest":
+        categories = load_fashionpedia_divest_categories()
     cat_ids = coco_eval.params.catIds
     cat_names = [categories.get(cat_id) for cat_id in cat_ids]
     m_aps = []
@@ -262,7 +264,7 @@ def compute_map_weighted_by_occlusion(coco_eval, anns_path, area_idx=0, max_dets
         images = data.get('images', [])
         categories = data.get('categories', [])
 
-    # Build mapping: (image_id, annotation_id) -> occlusion_level
+    # Mapping: (image_id, annotation_id) -> occlusion_level
     occ_map = {}
     for ann in annotations:
         image_id = ann['image_id']
@@ -280,7 +282,7 @@ def compute_map_weighted_by_occlusion(coco_eval, anns_path, area_idx=0, max_dets
             preds_path = cli_args.preds_path
         except Exception:
             logger.error(
-                "Could not determine predictions file path for occlusion-level evaluation.")
+                "Could not find the predictions file path for occlusion-level evaluation.")
             return
 
     for level in occlusion_levels:
@@ -372,7 +374,7 @@ def compute_map_weighted_by_occlusion(coco_eval, anns_path, area_idx=0, max_dets
 
             for catId, catW in cat_freqs.items():
                 if catId not in catId_to_local_idx:
-                    continue  # Skip categories not present in this occlusion level
+                    continue  # Skip categories not present in the current occlusion level
                 local_idx = catId_to_local_idx[catId]
                 precision = coco_eval_level.eval["precision"][:,
                                                               :, local_idx, area_idx, max_dets_idx]
@@ -464,10 +466,13 @@ def calculate_class_frequencies(anns_path):
     logger.debug(f"Loaded annotations from {anns_path}")
     # Define the FashionFail category ID's
     if cli_args.benchmark_dataset == "fashionpedia":
+        logger.debug("Using Fashionpedia categories for evaluation.")
         cat_inds = list(set(range(27)) - {2, 12, 16, 19, 20})
         cat_weights = {}
-    else:
-        # Use all categories from the COCO annotations
+    if cli_args.benchmark_dataset == "fashionpedia_divest":
+        cat_inds = [id for id in coco_ann.getCatIds()]
+        cat_weights = {cat_id: 0 for cat_id in cat_inds}
+    if cli_args.benchmark_dataset == "fashionveil":
         cat_inds = [id-1 for id in coco_ann.getCatIds()]
         cat_weights = {cat_id: 0 for cat_id in cat_inds}
 
@@ -534,8 +539,11 @@ def get_cocoeval(
     if cli_args.benchmark_dataset == "fashionveil":
         logger.info("Using FashionVeil categories for evaluation.")
         coco_eval.params.catIds = list(load_fashionveil_categories().keys())
-    else:
+    elif cli_args.benchmark_dataset == "fashionpedia":
         coco_eval.params.catIds = list(load_categories().keys())
+    elif cli_args.benchmark_dataset == "fashionpedia_divest":
+        coco_eval.params.catIds = list(
+            load_fashionpedia_divest_categories().keys())
 
     coco_eval.evaluate()
     coco_eval.accumulate()
@@ -563,7 +571,7 @@ def eval_with_coco(args, use_extended_coco: bool = False) -> None:
         print_tp_fp_fn_counts(coco_eval)
     if args.occlusion_anns:
         logger.info(
-            "Calculating mAP weighted by occlusion levels, using occlusion annotations."
+            "Calculating the metrics by occlusion level."
         )
         compute_map_weighted_by_occlusion(
             coco_eval,

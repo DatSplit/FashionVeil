@@ -152,14 +152,94 @@ if __name__ == "__main__":
     combined_view = fo_dataset.filter_labels(
         "ground_truth_detections",
         (F("occlusion") == "Moderate occlusion") & (F("label") == "watch"))
-    # ).filter_labels(
-    #     "rfdetrl_predictions_FashionVeil",
-    #     F("confidence") < 0.5
-    # )
-
-    # Save the dataset to disk
     fo_dataset.persistent = True
     fo_dataset.save()
 
-    session = fo.launch_app(combined_view, port=5151)
-    session.wait()
+    import numpy as np
+    import pandas as pd
+    import json
+    from collections import defaultdict
+
+    def calculate_classification_metrics_by_confidence(dataset, gt_field, pred_field, target_class="watch", occlusion_level="Heavy occlusion"):
+        """
+        Calculate TP, FN percentages for classification (presence/absence of class) 
+        across different confidence thresholds for occluded objects.
+        Since we're filtering for samples that HAVE the target class, TN and FP don't apply.
+        """
+
+        # Filter for samples with heavily occluded target class
+        filtered_view = dataset.filter_labels(
+            gt_field,
+            (F("occlusion") == occlusion_level) & (F("label") == target_class)
+        )
+
+        print(
+            f"Total samples with {occlusion_level} {target_class}: {len(filtered_view)}")
+
+        # Confidence thresholds to test
+        confidence_thresholds = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+        results = []
+
+        for conf_thresh in confidence_thresholds:
+            tp = fn = 0
+
+            for sample in filtered_view:
+                # Ground truth: sample has occluded watch (always True for our filtered set)
+                gt_has_target = True
+
+                # Prediction: check if model predicted target class above confidence threshold
+                pred_detections = sample[pred_field].detections if sample[pred_field] else [
+                ]
+
+                pred_has_target = any(
+                    det.label == target_class and det.confidence >= conf_thresh
+                    for det in pred_detections
+                )
+
+                # Classification metrics (presence/absence of class)
+                if gt_has_target and pred_has_target:
+                    tp += 1  # Correctly detected watch
+                elif gt_has_target and not pred_has_target:
+                    # Missed watch (either no prediction or low confidence)
+                    fn += 1
+
+            total = tp + fn  # Total samples with target class
+
+            results.append({
+                'confidence_threshold': conf_thresh,
+                'TP': tp,
+                'FN': fn,
+                'Total_Samples': total,
+                'TP_%': (tp / total) * 100 if total > 0 else 0,
+                'FN_%': (fn / total) * 100 if total > 0 else 0,
+                'Detection_Rate_%': (tp / total) * 100 if total > 0 else 0,
+                'Miss_Rate_%': (fn / total) * 100 if total > 0 else 0,
+                'Recall': tp / (tp + fn) if (tp + fn) > 0 else 0,
+            })
+
+        return pd.DataFrame(results)
+
+    # Usage with your FiftyOne dataset
+    results_df = calculate_classification_metrics_by_confidence(
+        fo_dataset,
+        "ground_truth_detections",
+        "rfdetrl_predictions_FashionVeil",
+        target_class="watch",
+        occlusion_level="No to slight occlusion"
+    )
+
+    print("\nClassification metrics by confidence threshold:")
+    print(results_df.round(2))
+
+    # # Save results
+    # results_df.to_csv(
+    #     "watch_occlusion_classification_metrics.csv", index=False)
+
+    # Print formatted results
+    print(f"\nFormatted Results for Heavy occlusion watches:")
+    for _, row in results_df.iterrows():
+        print(
+            f"Confidence {row['confidence_threshold']}: TP={row['TP_%']:.1f}%, FN={row['FN_%']:.1f}%")
+
+    # session = fo.launch_app(combined_view, port=5151)
+    # session.wait()

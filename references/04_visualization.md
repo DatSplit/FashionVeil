@@ -43,6 +43,10 @@ Predicted bounding boxes of hood are quite often multiple times as large as the 
 
 PCA in bounding box predictions.
 
+```bash
+python3 fiftyone_calculations_all2.py     --image_dir "/home/datsplit/FashionVeil/FashionVeil_all"     --anns_dir "/home/datsplit/FashionVeil/FashionVeil_all/FashionVeil_supercategories.json"     --dataset_name "predictions_FashionVeil"
+```
+
 ---
 <div style="display: flex; justify-content: space-between;">
 

@@ -86,3 +86,4 @@ MANIFEST
 .gitignore
 !fashionveil_coco.json
 *.txt
+!fashionveil_logo.png

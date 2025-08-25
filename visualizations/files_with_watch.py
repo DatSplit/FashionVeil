@@ -51,7 +51,7 @@ smart_watches = [
     "p126", "p127", "p138", "p144"
 ]
 print(len(smart_watches)/len(distinct_p_numbers))
-# Filter images that start with smart_watches patterns
+
 smart_watch_images = []
 for filename in files_with_category_13:
     # Extract the p number from the filename
@@ -64,14 +64,11 @@ for filename in files_with_category_13:
 print(f"Smart watch images found: {len(smart_watch_images)}")
 print(f"Smart watch images: {smart_watch_images}")
 
-# Create output directory
 output_dir = "smart_watch_images"
 os.makedirs(output_dir, exist_ok=True)
 
-# Source directory containing the images
 source_dir = "/home/datsplit/FashionVeil/FashionVeil_all"
 
-# Copy smart watch images to the new folder
 copied_count = 0
 for filename in smart_watch_images:
     source_path = os.path.join(source_dir, filename)
@@ -80,7 +77,6 @@ for filename in smart_watch_images:
     if os.path.exists(source_path):
         shutil.copy2(source_path, dest_path)
         copied_count += 1
-        # print(f"Copied: {filename}")
     else:
         print(f"File not found: {source_path}")
 

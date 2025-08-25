@@ -13,7 +13,7 @@ curl -L "PRESIGNED_URL" -o fashionpedia_rfdetr.zip
 unzip -o fashionpedia_rfdetr.zip
 ```
 
-Fashionpedia-divest (Not available yet - around mid July)
+Fashionpedia-divest (Not available)
 
 ### FashionVeil
 

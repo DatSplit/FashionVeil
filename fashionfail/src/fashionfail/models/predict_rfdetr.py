@@ -123,7 +123,8 @@ def predict_with_onnx(model_name, image_dir, out_dir, fashionveil_mapping, confi
             conversion_path = home_dir / "FashionVeil" / "fashionpedia_divest_mapping.json"
         if fashionveil_mapping:
             home_dir = Path.home()
-            conversion_path = home_dir / "FashionVeil" / "fashionveil_coco.json"
+            conversion_path = home_dir / "FashionVeil" / \
+                "fashionveil_coco.json"  # "FashionVeil_divest_all.json"  #
 
         if fashionveil_mapping or fashionpedia_divest_mapping:
             with open(conversion_path, "r") as f:

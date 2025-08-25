@@ -89,6 +89,8 @@ def print_per_class_metrics(coco_eval: COCOeval, return_results: bool = False) -
         categories = load_fashionpedia_divest_categories()
     cat_ids = coco_eval.params.catIds
     cat_names = [categories.get(cat_id) for cat_id in cat_ids]
+    print("cat_ids:", cat_ids)
+    print("cat_names:", cat_names)
     m_aps = []
     anns = coco_eval.cocoGt.dataset["annotations"]
 
@@ -102,10 +104,10 @@ def print_per_class_metrics(coco_eval: COCOeval, return_results: bool = False) -
         else:
             m_ap = np.mean(pr[pr > -1])
         m_aps.append(m_ap)
-    if cli_args.benchmark_dataset == "fashionveil":
-        m_aps_shifted = m_aps[1:] + m_aps[:1]  # Hack to fix indexing.
-    else:
-        m_aps_shifted = m_aps
+    # if cli_args.benchmark_dataset == "fashionveil":
+    #     m_aps_shifted = m_aps[1:] + m_aps[:1]  # Hack to fix indexing.
+    # else:
+    #     m_aps_shifted = m_aps
 
     n_objs = [cat_ann_count.get(c, 0) for c in cat_ids]
     if cli_args.benchmark_dataset == "fashionveil":
@@ -473,7 +475,7 @@ def calculate_class_frequencies(anns_path):
         cat_inds = [id for id in coco_ann.getCatIds()]
         cat_weights = {cat_id: 0 for cat_id in cat_inds}
     if cli_args.benchmark_dataset == "fashionveil":
-        cat_inds = [id-1 for id in coco_ann.getCatIds()]
+        cat_inds = [id-1 for id in coco_ann.getCatIds()]  # add id -1 back
         cat_weights = {cat_id: 0 for cat_id in cat_inds}
 
     # Retrieve number of samples per class

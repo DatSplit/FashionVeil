@@ -37,7 +37,6 @@ These datasets can now be used to train and/or evaluate existing and new fashion
 ---
 <div style="display: flex; justify-content: space-between;">
 
-   [Back](00_dataset_curation.md)
 
    [Next: Training](02_training.md)
 

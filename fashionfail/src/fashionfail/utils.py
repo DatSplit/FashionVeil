@@ -376,7 +376,8 @@ def load_fashionpedia_divest_categories() -> Dict[int, str]:
 
     home_dir = Path.home()
     # Add: new one.
-    expected_path = home_dir / "FashionVeil" / "fashionpedia_divest_only.json"
+    expected_path = home_dir / "FashionVeil" / \
+        "FashionVeil_divest_all.json"  # "fashionveil_coco.json"
     if not expected_path.exists():
         raise FileNotFoundError(
             f"Fashionpedia divest annotations are expected to be at: `{expected_path}`."

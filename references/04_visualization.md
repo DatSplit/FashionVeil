@@ -46,7 +46,9 @@ PCA in bounding box predictions.
 ```bash
 python3 fiftyone_calculations_all2.py     --image_dir "/home/datsplit/FashionVeil/FashionVeil_all"     --anns_dir "/home/datsplit/FashionVeil/FashionVeil_all/FashionVeil_supercategories.json"     --dataset_name "predictions_FashionVeil"
 ```
-
+```bash
+python3 fiftyone_calculations_all2.py     --image_dir "/home/datsplit/FashionVeil/FashionVeil_all"     --anns_dir "/home/datsplit/FashionVeil/FashionVeil_divest_all.json"     --dataset_name "predictions_FashionVeil_new"
+```
 ---
 <div style="display: flex; justify-content: space-between;">
 

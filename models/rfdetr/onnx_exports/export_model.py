@@ -1,9 +1,9 @@
 import onnxruntime as ort
 import onnx
-from rfdetr import RFDETRBase
+from rfdetr import RFDETRBase, RFDETRLarge
 
-model = RFDETRBase(
-    pretrain_weights="/home/datsplit/FashionVeil/models/rfdetr/rfdetr_b_fashionpedia-divest-only/checkpoint_best_ema.pth", resolution=1120)
+model = RFDETRLarge(
+    pretrain_weights="/home/datsplit/FashionVeil/models/rfdetr/rfdetr_l_fashionpedia-divest-only/checkpoint_best_total.pth", resolution=1120)
 
 model.export(output_dir="exported_model", infer_dir=None,
              simplify=False,  backbone_only=False)

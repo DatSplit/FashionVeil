@@ -76,7 +76,8 @@ def main():
                 tensorboard=True,
                 output_dir=args.output_dir,
                 checkpoint_interval=args.checkpoint_interval,
-                resume=args.resume)
+                resume=args.resume,
+                early_stopping_patience=5)
     model.export()
 
     df = pd.DataFrame(history)

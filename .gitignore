@@ -85,3 +85,4 @@ MANIFEST
 *.json
 .gitignore
 !fashionveil_coco.json
+*.txt

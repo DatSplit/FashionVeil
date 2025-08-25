@@ -1,3 +1,0 @@
-[MASTER]
-# Add the source folder to the Python path
-init-hook='import sys; sys.path.append("src")'

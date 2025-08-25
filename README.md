@@ -4,7 +4,7 @@
 <img src="fashionveil_logo.png" alt="FashionVeil" width="30%">
 
 
-This repository contains code that describes how to downloads the novel FashionVeil dataset and how to train new models and evaluate existing and new fashion apparel detection models.
+This repository contains instructions and code describing how to download the novel FashionVeil dataset, train new models, and evaluate existing and new fashion apparel detection models.
 
 
 ### Installation

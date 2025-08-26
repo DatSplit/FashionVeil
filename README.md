@@ -1,12 +1,12 @@
 # FashionVeil
-### Fashion apparel benchmarking dataset with occlusion level annotations for clothes and accessories
+### Fashion apparel dataset with occlusion level annotations for clothes and accessories
 
 <img src="fashionveil_logo.png" alt="FashionVeil" width="30%">
 
 
 This repository contains instructions and code describing how to download the novel FashionVeil dataset, train new models, and evaluate existing and new fashion apparel detection models. It provides instructions on how to reproduce the main results from my thesis, which is publicly available at: 📝 (after release to UU thesis repository)
 
-[![Generic badge][logo-hf_spaces]][fv-hf_spaces]
+Huggingface space in which you can run inference on your own images: [![Generic badge][logo-hf_spaces]][fv-hf_spaces]
 ### Installation
 
 Create a virtual environment named `fv` (short for FashionVeil):

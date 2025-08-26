@@ -19,7 +19,7 @@ pip install -e .
 ```
 
 ### Usage
-Follow the instructions in `references/` for instructions on [downloads](references/01_dataset_downloads.md), [training](references/02_training.md), [inference and evaluation](references/03_inference_and_evaluation), and [visualization](references/04_visualization.md).
+Follow the instructions in `references/` for instructions on [downloads](references/01_dataset_downloads.md), [training](references/02_training.md), [inference and evaluation](references/03_inference_and_evaluation.md), and [visualization](references/04_visualization.md).
 
 
 

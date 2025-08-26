@@ -48,7 +48,7 @@ def get_cli_args():
         "--eval_method",
         type=str,
         required=True,
-        choices=["COCO", "COCO-extended", "all", "Confidences"],
+        choices=["COCO", "COCO-extended", "all"],
         help="The name of the evaluation framework to be used, or `all` to run all eval methods.",
     )
     parser.add_argument(
@@ -104,10 +104,6 @@ def print_per_class_metrics(coco_eval: COCOeval, return_results: bool = False) -
         else:
             m_ap = np.mean(pr[pr > -1])
         m_aps.append(m_ap)
-    # if cli_args.benchmark_dataset == "fashionveil":
-    #     m_aps_shifted = m_aps[1:] + m_aps[:1]  # Hack to fix indexing.
-    # else:
-    #     m_aps_shifted = m_aps
 
     n_objs = [cat_ann_count.get(c, 0) for c in cat_ids]
     if cli_args.benchmark_dataset == "fashionveil":
@@ -210,23 +206,6 @@ def compute_map_weighted(coco_eval, anns_path, cli_args, area_idx=0, max_dets_id
         f"\nw-mAP50 = {w_map_50:.3f}",
         f"\nw-mAP75 = {w_map_75:.3f}",
     )
-    if cli_args.eval_method == "Confidences":
-        confidence_threshold = cli_args.preds_path.split(
-            "/")[-1].split("_")[1][:3]
-        df_name = cli_args.model_name
-        if not os.path.exists(f"{df_name}.csv"):
-            df = pd.DataFrame(
-                {"confidence_threshold": [confidence_threshold], "wmap50": [w_map_50]})
-            df.to_csv(f"{df_name}.csv", index=False)
-        else:
-            df = pd.read_csv(f"{df_name}.csv")
-            new_row = {
-                "confidence_threshold": confidence_threshold, "wmap50": w_map_50}
-            df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
-            df.to_csv(f"{df_name}.csv", index=False)
-        logger.info(
-            f"Saved mAP results to {df_name}.csv with confidence threshold {confidence_threshold} and w-mAP50 {w_map_50:.3f}."
-        )
 
     # mAR calculation
     mar1, mar100, w_mar1, w_mar100 = 0, 0, 0, 0
@@ -245,6 +224,25 @@ def compute_map_weighted(coco_eval, anns_path, cli_args, area_idx=0, max_dets_id
         f"\nw-mAR1   = {w_mar1:.3f}",
         f"\nw-mAR100 = {w_mar100:.3f}",
     )
+
+
+def compute_iou(box1, box2):
+
+    x1, y1, w1, h1 = box1
+    x2, y2, w2, h2 = box2
+    xa = max(x1, x2)
+    ya = max(y1, y2)
+    xb = min(x1 + w1, x2 + w2)
+    yb = min(y1 + h1, y2 + h2)
+    inter_w = max(0, xb - xa)
+    inter_h = max(0, yb - ya)
+    inter_area = inter_w * inter_h
+    area1 = w1 * h1
+    area2 = w2 * h2
+    union_area = area1 + area2 - inter_area
+    if union_area == 0:
+        return 0.0
+    return inter_area / union_area
 
 
 def compute_map_weighted_by_occlusion(coco_eval, anns_path, area_idx=0, max_dets_idx=2) -> None:
@@ -288,7 +286,7 @@ def compute_map_weighted_by_occlusion(coco_eval, anns_path, area_idx=0, max_dets
             return
 
     for level in occlusion_levels:
-        logger.info(f"\n=== Occlusion Level: {level} ===")
+        logger.info(f"\n=== Occlusion level: {level} ===")
 
         filtered_annotations = [ann for ann in annotations if ann.get(
             'occlusion', "Unknown") == level]
@@ -314,24 +312,6 @@ def compute_map_weighted_by_occlusion(coco_eval, anns_path, area_idx=0, max_dets
             bbox = ann['bbox']
             other_level_boxes.setdefault(img_id, []).append(bbox)
 
-        def compute_iou(box1, box2):
-
-            x1, y1, w1, h1 = box1
-            x2, y2, w2, h2 = box2
-            xa = max(x1, x2)
-            ya = max(y1, y2)
-            xb = min(x1 + w1, x2 + w2)
-            yb = min(y1 + h1, y2 + h2)
-            inter_w = max(0, xb - xa)
-            inter_h = max(0, yb - ya)
-            inter_area = inter_w * inter_h
-            area1 = w1 * h1
-            area2 = w2 * h2
-            union_area = area1 + area2 - inter_area
-            if union_area == 0:
-                return 0.0
-            return inter_area / union_area
-
         with tempfile.TemporaryDirectory() as tmpdir:
             ann_file = os.path.join(tmpdir, f"anns_{level}.json")
             with open(ann_file, 'w') as f:
@@ -348,6 +328,7 @@ def compute_map_weighted_by_occlusion(coco_eval, anns_path, area_idx=0, max_dets
                 if p['image_id'] not in image_ids:
                     continue
                 overlaps = False
+                # Filter out predictions above 0.5 IoU that belong that another occlusion level (e.g., heavy occlusion, when evaluating moderate occlusion).
                 for other_box in other_level_boxes.get(p['image_id'], []):
                     if compute_iou(p['bbox'], other_box) > 0.5:
                         overlaps = True

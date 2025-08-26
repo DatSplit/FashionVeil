@@ -6,7 +6,7 @@
 
 This repository contains instructions and code describing how to download the novel FashionVeil dataset, train new models, and evaluate existing and new fashion apparel detection models. It provides instructions on how to reproduce the main results from my thesis, which is publicly available at: 📝 (after release to UU thesis repository)
 
-Huggingface space in which you can run inference on your own images: [![Generic badge][logo-hf_spaces]][fv-hf_spaces]
+Furthermore, I've created a Huggingface space in which you can run inference on your own images on RF-DETR-B and RF-DETR-L models trained on Fashionpedia: [![Generic badge][logo-hf_spaces]][fv-hf_spaces]
 ### Installation
 
 Create a virtual environment named `fv` (short for FashionVeil):

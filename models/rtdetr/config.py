@@ -18,7 +18,7 @@ PRECISION = 16
 # Checkpointing
 # "./saved_models/rtdetr-20250320_003348-epoch=17-validation_loss=6.43.ckpt"
 # "./saved_models/rtdetr_v2_r101_fashionpedia-20250325_173024-epoch=03-validation_loss=7.48.ckpt"
-CKPT_PATH = "./saved_models/rtdetr_v2_r101_fashionpedia-20250326_180951-epoch=03-validation_loss=7.67.ckpt"
+CKPT_PATH = None  # "./saved_models/rtdetr_v2_r101_fashionpedia-20250326_180951-epoch=03-validation_loss=7.67.ckpt"
 
 # Backbone
 BACKBONE = "rtdetr_v2_r101vd"

@@ -2,7 +2,6 @@ from fashionfail.visualization.predictions import visualize_bbox_predictions
 import argparse
 import os
 import numpy as np
-from pathlib import Path
 
 
 def main():
@@ -22,9 +21,9 @@ def main():
                         help='Benchmark dataset (fashionveil or other)')
     parser.add_argument('--output_file_name', type=str, default='bbox_predictions',
                         help='Name of the output file')
-    parser.add_argument('--n_row', type=int, default=10,
+    parser.add_argument('--n_row', type=int, default=7,
                         help='Number of rows in the output visualization')
-    parser.add_argument('--n_col', type=int, default=10,
+    parser.add_argument('--n_col', type=int, default=6,
                         help='Number of columns in the output visualization')
     parser.add_argument('--filter_single_class_name', type=str,
                         help='class name that you want to only shown in your visualization')
@@ -36,7 +35,6 @@ def main():
 
     os.makedirs(args.output_folder, exist_ok=True)
 
-    # Create output file path
     output_file = os.path.join(
         args.output_folder, f"{args.output_file_name}.pdf")
 

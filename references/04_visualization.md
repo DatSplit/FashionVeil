@@ -10,28 +10,28 @@ To visualize predictions for an image set run the following commands:
 ```bash
 cd visualizations
 mkdir -p bbox_predictions
-python visualize_bbox_predictions.py \
-    --predictions_path "/home/datsplit/FashionVeil/fashionfail/predictions_fashionformer_swinb_fashionveil/fashionformer_swin_b_3x-fashionveil.npz" \
-    --images_folder "/home/datsplit/FashionVeil/visualizations/smart_watch_images" \
-    --output_folder "bbox_predictions" \
-    --score_threshold "0.1" \
-    --model_type "fformer" \
-    --benchmark_dataset "fashionveil" \
-    --output_file_name "bbox_preds_smart_watches" \
-    --filter_single_class_name "watch"
-
 
 python visualize_bbox_predictions.py \
     --predictions_path "/home/datsplit/FashionVeil/fashionfail/src/predictions_fashionveil_all_rfdetrl/rfdetr_0.1.npz" \
-    --images_folder "/home/datsplit/FashionVeil/visualizations/smart_watch_images" \
+    --images_folder "/home/datsplit/FashionVeil/visualizations/FashionVeil_test_bags" \
     --output_folder "bbox_predictions" \
-    --score_threshold "0.1" \
+    --score_threshold "0.3" \
     --model_type "rfdetr" \
     --benchmark_dataset "fashionveil" \
-    --output_file_name "bbox_preds_smart_watches_rfdetrl" \
-    --filter_single_class_name "watch"
+    --output_file_name "bbox_preds_bags_rfdetrl" \
+    --filter_single_class_name "bag, wallet"
+
+python visualize_bbox_predictions.py \
+    --predictions_path "/home/datsplit/FashionVeil/fashionfail/src/predictions_fashionveil_finetuned_fashionveil/rfdetr_0.1.npz" \
+    --images_folder "/home/datsplit/FashionVeil/visualizations/FashionVeil_test_bags" \
+    --output_folder "bbox_predictions" \
+    --score_threshold "0.3" \
+    --model_type "rfdetr" \
+    --benchmark_dataset "fashionveil" \
+    --output_file_name "bbox_preds_bags_rfdetrl_finetuned" \
+    --filter_single_class_name "bag, wallet"
 ```
-Explainability:
+<!-- Explainability:
 ```bash
 cd fashionfail/src/fashionfail/visualization
 python3 fiftyone_test.py \
@@ -48,7 +48,7 @@ python3 fiftyone_calculations_all2.py     --image_dir "/home/datsplit/FashionVei
 ```
 ```bash
 python3 fiftyone_calculations_all2.py     --image_dir "/home/datsplit/FashionVeil/FashionVeil_all"     --anns_dir "/home/datsplit/FashionVeil/FashionVeil_divest_all.json"     --dataset_name "predictions_FashionVeil_new"
-```
+``` -->
 ---
 <div style="display: flex; justify-content: space-between;">
 
